@@ -1,11 +1,7 @@
-import sys
-sys.path.append("D:/projects/python/trading/serious_bot")
-
 import pandas as pd
 from pprint import pprint
 from IPython.display import display
 from func import tables as tb
-import re 
 from ta.momentum import StochasticOscillator
 
 

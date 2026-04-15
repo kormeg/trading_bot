@@ -4,7 +4,7 @@ import subprocess
 import importlib.util
 
 # Список необходимых библиотек
-required_modules = ["pybit", "pandas", "numpy", "IPython", "matplotlib", "pprint"]
+required_modules = ["pybit", "pandas", "numpy", "IPython", "matplotlib", "pprint", "ta"]
 
 # проверка наличия и установка библиотек
 for module in required_modules:
