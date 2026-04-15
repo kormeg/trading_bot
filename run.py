@@ -2,9 +2,6 @@ import os
 import sys
 import subprocess
 import importlib.util
-import bot
-
-
 
 # Список необходимых библиотек
 required_modules = ["pybit", "pandas", "numpy", "IPython", "matplotlib", "pprint"]
@@ -25,6 +22,8 @@ for module in required_modules:
             print(f"Критическая ошибка: не удалось установить {module}")
             sys.exit(1)
 print("Все пакеты готовы к использованию!")
+
+import bot
 
 
 # # синхронизация времени
