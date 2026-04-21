@@ -50,6 +50,7 @@ class GUI():
         self.vol_sorted = False
         self.vol_cut = False
         self.new_deals = {}
+        self.history = {}
 
         with open(self.settings_path, "r", encoding="utf-8") as f:
             self.settings = json.load(f) 
