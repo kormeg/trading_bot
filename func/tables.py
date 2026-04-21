@@ -4,9 +4,6 @@ import re
 
 
 
-
-
-
 def set_postfix(df, interval=None, pf=None):
     if pf == None:
         if type(interval) != str:
@@ -43,17 +40,6 @@ def drop_postfix(cols=(list, pd.DataFrame)):
         return cols[:1] + new_cols
     else:
         return cols
-    # new_cols = []
-    # for i in cols:
-    #     match = re.findall(r"(.*)(_.*)", i)
-    #     if len(match) == 1:
-    #         new_cols.append(match[0][0])s
-    #     else:
-    #         return cols
-    #         # new_cols.append(i)
-    # return new_cols
-
-    # сделать параметр return_df=False сделать проверку если тру и тип не датафрейм raise error
 
 # ----------------------------------------------------------------------------------------------------------------
 
@@ -209,7 +195,6 @@ def to_along(orig_df, direction=None, pf=None, time_to_ind=False):
             final_list.append(table)
         first_df = final_list[0]
         other_dfs = final_list[1:]
-        # display(other_dfs)
         for x in other_dfs:
             df = first_df.merge(x,"outer", on=list(first_df.columns[:-1]))
         df = df.sort_values("time")
@@ -237,41 +222,5 @@ def get_overall_table(df, dfs=(list, pd.DataFrame), direction="decrease", time_t
     
     return overall_df
 
-# ----------------------------------------------------------------------------------------------------------------
 
-# def get_history(client, symbol, interval, for_what, start, end=now_dt, pf=None, time_to_ind=True, 
-#                 direction="decrease", moscow=True, category ="linear"):
-#     if interval == "D":
-#         inter = 60 * 24
-#     elif interval == "W":
-#         inter = 60*24*7
-#     elif interval == "M":
-#         print("XZ")
-#         return
-#     else:
-#         inter = interval
-
-#     start = pd.to_datetime(start)
-#     end = pd.to_datetime(end)
-#     start_tmp = end - dt.timedelta(minutes=200 * inter)
-#     candles_tmp = []
-#     while start_tmp > start:
-#         candles = get_info_bybit(client, symbol, interval, category=category, 
-#                                  start=int(time.mktime(start_tmp.timetuple())) * 1000, 
-#                                 #  now_timestamp = int(time.mktime(now_dt.timetuple())) * 1000,
-#                                  end=int(time.mktime(end.timetuple())) * 1000)
-#         end = start_tmp
-#         start_tmp = end - dt.timedelta(minutes = 200 * inter)
-#         candles_tmp += candles
-#     candles = get_info_bybit(client, symbol, interval, category=category, 
-#                          start=int(time.mktime(start.timetuple())) * 1000, 
-#                          end=int(time.mktime(end.timetuple())) * 1000)
-#     candles_tmp += candles
-
-#     df = candles_to_df(candles_tmp, for_what=for_what, moscow=moscow, bybit=True)
-#     df = set_postfix(df, interval, pf)
-#     df = set_direction(df, direction)
-#     if time_to_ind:
-#         df = df.set_index("time")
-#     return df
 

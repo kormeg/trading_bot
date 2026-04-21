@@ -1,16 +1,9 @@
 import sys
 sys.path.append("../config/strategies")
 
-from func import tables as tb
 from func import indicators as indi
-
-import matplotlib.markers as mark
-# import mplfinance as mpf
-# import pandas_ta as ta
 import pandas as pd
-import json
 import os.path
-from pprint import pprint
 from window import Window as wn
 
              
@@ -43,7 +36,6 @@ class Strategy:
         self.name = name
         if os.path.exists(f"../config/strategies/{self.name}.py"):
             self.stg = __import__(self.name)
-            # self.stg.strat_dict["strat_name"] = self.name
             self.strategy_dict = self.stg.strat_dict
             self.old_data = self.stg.strat_dict.copy()
             self.status = "existing"
@@ -68,9 +60,7 @@ class Strategy:
                         ):
         new_dict = {k:v for k, v in locals().items() if type(v) != bool and k != "self"}  
         self.strategy_dict = self.strategy_dict | new_dict
-        # self.stg.strat_dict = self.strategy_dict
         self.stg.strat_dict.update(self.strategy_dict)
-        # self.save_strategy()
         
     
     def save_strategy(self, name=None):
@@ -80,7 +70,6 @@ class Strategy:
                 w = wn(label="Стратегия с таким именем уже существует. удалить её?", yes_no_buttons=["Да", "Нет"])
                 if w.yes_no:
                     to_remove=True
-                    # os.remove(f"../config/strategies/{name}.py")
 
             if os.path.exists(f"../config/strategies/{self.name}.py"):
                 w = wn(label="Внести изменения в стратегию?", yes_no_buttons=["Да", "Нет"])

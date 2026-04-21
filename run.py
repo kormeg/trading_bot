@@ -2,27 +2,27 @@ import os
 import sys
 import subprocess
 import importlib.util
+# from importlib.metadata import version as get_version
 
 # Список необходимых библиотек
-required_modules = ["pybit", "pandas", "numpy", "IPython", "matplotlib", "pprint", "ta"]
+required_modules = {"pybit" : "5.7.0", 
+                    "pandas" : "2.0.2", 
+                    "numpy" : "1.24.3", 
+                    "IPython" : "8.8.0", 
+                    "matplotlib" : "3.6.3",  
+                    "ta" : "0.10.2"}
 
 # проверка наличия и установка библиотек
-for module in required_modules:
-    if importlib.util.find_spec(module) is not None:
-        print(f"✓ Модуль {module} уже установлен")
-    else:
-        print(f"Модуль {module} не найден, устанавливается...")
-        try:
-            subprocess.check_call([
-                sys.executable, "-m", "pip", "install", module
-            ])
-            print(f"✓ Пакет {module} успешно установлен")
-        except subprocess.CalledProcessError as e:
-            print(f"✗ Ошибка при установке {module}: {e}")
-            print(f"Критическая ошибка: не удалось установить {module}")
-            sys.exit(1)
-print("Все пакеты готовы к использованию!")
-
+for module, version in required_modules.items():
+    try:
+        subprocess.check_call([
+            sys.executable, "-m", "pip", "install", "--upgrade", f"{module}=={version}"
+        ])
+    except subprocess.CalledProcessError as e:
+        print(f"✗ Ошибка при установке {module}: {e}")
+        print(f"Критическая ошибка: не удалось установить {module}")
+        sys.exit(1)
+        
 import bot
 
 

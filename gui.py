@@ -45,7 +45,6 @@ class GUI():
 
         self.client = client
         self.settings_path = settings_path
-        print(self.settings_path)
         self.mode = "view"
         self.trading = False
         self.vol_sorted = False
@@ -58,8 +57,6 @@ class GUI():
         self.strategy = st.Strategy(self.settings.get("last_strategy", None))
         if self.strategy.name not in st.Strategy.get_strat_list():
             self.strategy.name = None 
-        print(self.strategy.name)
-        print(self.settings)
 # ---------------
         if self.strategy.name:
             self.indicators = self.strategy.strategy_dict["indicators"]
@@ -185,10 +182,10 @@ class GUI():
                 text = ""
                 for i in list(self.history):
                     if "symbol" in list(self.history[i]):
-                        print_dict = {v:self.history[i][k] for k, v in self.history_items.items()}
+                        print_dict = {v:self.history[i][k] if k in list(self.history[i]) else "не зафиксировано" for k, v in self.history_items.items()}
                     else:
                         print_dict = self.history[i]
-                    text+="\n------------------------------\n"+"\n".join([k+" : "+ v for k, v in print_dict.items()])
+                    text+="\n\n------------------------------\n"+"\n".join([k+" : "+ v for k, v in print_dict.items()])
                 self.output_window.insert(index=tk.END, chars=text)
                 self.output_window.see("end")
 
@@ -205,8 +202,8 @@ class GUI():
             self.start_stop_button.grid(row=0, column=8, sticky="nsew")
             self.widgets.append(self.start_stop_button)
 
-            self.history_label = tk.Label(self.window, text = "История сделок")
-            self.history_label.grid(row=0, column=10, columnspan=2, sticky="nsew")
+            self.history_label = tk.Label(self.window, text = "История сделок", font=20)
+            self.history_label.grid(row=1, column=10, columnspan=2, sticky="nsew")
             self.widgets.append(self.history_label)
 
         # elif self.mode == "edit":
@@ -248,6 +245,20 @@ class GUI():
 
         if self.chart.symbol and self.chart.timeframe:
             self.chart.add_candles(self.client.data, symbol=self.chart.symbol, timeframe=self.chart.timeframe)
+            for i in list(self.history)[100:]:
+                if self.history[i].get("symbol", "") == self.chart.symbol:
+                    try:
+                        self.chart.add_plot(data=[float(self.history[i]["entryPrice"]), float(self.history[i]["stopLoss"]), float(self.history[i]["takeProfit"])], 
+                                            chart="main", 
+                                            chart_type="hlines",
+                                            colors=["black", "red", "green" ], 
+                                            linewidth=0.5, 
+                                            transparency=0.6, 
+                                            titles=[self.history[i]["side"], "stop loss", "take profit"], 
+                                            xmins=[pd.to_datetime(self.history[i]["identification_time"], dayfirst=True)]*3
+                                            )
+                    except:
+                        pass
             if self.strategy.name:
                 self.strategy.calculate_strategy(self.client.data, self.chart.symbol)     
                 for i in list(self.strategy.indi_dict):
@@ -261,9 +272,29 @@ class GUI():
 
 
     def update_chart(self):
+        if not self.client.client:
+            self.client.api_connection(self.settings["api_key"], self.settings["secret_key"], self.client.demo)
+        if not self.client.public_ws:
+            self.client.public_ws_connection()
+        if not self.client.private_ws:
+            self.client.private_ws_connection(self.settings["api_key"], self.settings["secret_key"])
         for ax in self.chart.axis_list:
             ax.clear()
         self.chart.add_candles(self.client.data, symbol=self.chart.symbol, timeframe=self.chart.timeframe)
+        for i in list(self.history)[-100:]:
+            if self.history[i].get("symbol", "") == self.chart.symbol:
+                try:
+                    self.chart.add_plot(data=[float(self.history[i]["entryPrice"]), float(self.history[i]["stopLoss"]), float(self.history[i]["takeProfit"])], 
+                                        chart="main", 
+                                        chart_type="hlines",
+                                        colors=["black", "red", "green" ], 
+                                        linewidth=0.5, 
+                                        transparency=0.6, 
+                                        titles=[self.history[i]["side"], "stop loss", "take profit"], 
+                                        xmins=[pd.to_datetime(self.history[i]["identification_time"], dayfirst=True)]*3
+                                            )
+                except:
+                    pass
         if self.strategy.name:
             if self.trading:
                 self.cut_by_volatility()
@@ -339,9 +370,13 @@ class GUI():
 
     def vol_cut_on_off(self):
         if not self.vol_cut:
-            w = wn("Отсечь по волатильности", main_label="Введи количество", entry=True, exit="ok", root=self.window)
-            self.vol_cut=int(w.entered_value)
-            self.cut_by_volatility()
+            try:
+                w = wn("Отсечь по волатильности", main_label="Введи количество", entry=True, exit="ok", root=self.window)
+                self.vol_cut=int(w.entered_value)
+                self.cut_by_volatility()
+            except: 
+                print("отмена")
+                return
             
         else:
             self.vol_cut = False
@@ -397,12 +432,10 @@ class GUI():
         if self.trading:
             self.trading=False
             self.strategy.stg.trade_dict={}
-            message = "---------------stop trading---------------"
-            # message = "\n-------------------\n----stop trading---\n"
+            message = "\n-------------------\n------stop trading-----\n"
         else:
             self.trading = True
-            # message = "\n-------------------\n---start trading---\n"
-            message = "--------------start trading---------------"
+            message = "\n-------------------\n-----start trading-----\n"
         now = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.history[time.time()] = {"time": now, "trading": message}
         with open(self.history_path, "w", encoding="utf-8") as f:
@@ -422,27 +455,41 @@ class GUI():
             for symb in self.strategy.strategy_dict["symbols"]:
                 for inter in self.strategy.strategy_dict["timeframes"]:
                     if inter == "15":
-                        # print("15")
                         natr = GUI.natr(self.client.data[symb]["intervals"]["15"]["data"]) 
                     else:
                         natr = self.client.data[symb]["natr"]
-                    # print("natr")
-                    # print(natr)
-                    deal = self.strategy.stg.trade(self.client, self.strategy, symb, inter, natr, 14, 600)
+                    deal = self.strategy.stg.trade(self.client, self.strategy, symb, inter, natr, 14, -100, 2, 1)
                     if deal:
-                        self.new_deals[symb]=deal
-                        if len(list(self.client.deals)) < 5 and symb not in list(self.client.deals):
-                            print("----------------------------------------------")
-                            print("deal")
-
+                        if len(list(self.client.deals)) < 5 or symb in list(self.client.deals):
+                            if symb in list(self.client.deals):
+                                position = self.client.get_deals(symb)
+                                side = "Buy" if position["side"] == "Sell" else "Sell"
+                                self.client.create_order(symbol=position["symbol"], side=side, qty=position["size"], leverage=1)
+                                while not self.client.private_mail:
+                                    time.sleep(0.1)
+                                self.client.sort_private_mail()
+                                print("----------------------------------------------")
+                                print("Перезаход")
+                            elif len(list(self.client.deals)) < 5:
+                                print("----------------------------------------------")
+                                print("deal")
+                            self.new_deals[symb]=deal
                             self.order = self.client.create_order(
                                 symbol=symb, side=deal["side"], 
                                 qty=deal["deal_price"], 
                                 order_type=self.strategy.strategy_dict["order_type"], 
                                 stop_loss=deal["stop_loss"], 
-                                trailing_stop= deal["trailing_stop"], 
-                                trail_act_price=deal["trail_act_price"], 
                                 take_profit=deal["take_profit"])
+                     
+                            while not self.client.private_mail:
+                                    time.sleep(0.1)
+                            self.client.sort_private_mail()
+                            difference = float(self.client.deals[symb]["entryPrice"]) - float(deal["identification_price"])
+                            if difference != 0:
+                                stop_loss = str(float(deal["stop_loss"])+difference)
+                                take_profit = str(float(deal["take_profit"])+difference)
+                                self.client.set_tpsl(symbol=symb, tp=take_profit, sl=stop_loss)#, trail_act_price=trail_act_price, trailing_stop=trailing_stop)
+                    
                     self.client.sort_private_mail()
                     if self.client.deal_news:
                         self.update_history()
@@ -454,14 +501,15 @@ class GUI():
         self.new_deals={}
         
         for i in range(len(list(d))):
-            if len(d[list(d)[i]])>20:
+            if len(d[list(d)[i]])>21:
                 self.history[list(d)[i]]=d[list(d)[i]]
             else:
-                self.history[list(d)[i]] = self.history[list(d)[i]]|d[list(d)[i]]
+                try:
+                    self.history[list(d)[i]] = self.history[list(d)[i]]|d[list(d)[i]]
+                except:
+                    self.history[list(d)[i]]=d[list(d)[i]]
         with open(self.history_path, "w", encoding="utf-8") as f:
             json.dump(self.history, f, indent=4, ensure_ascii=False)
         self.make_widgets()
         self.client.deal_news=False
         self.client.balance_news=False
-                            
-

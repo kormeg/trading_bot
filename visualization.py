@@ -1,7 +1,5 @@
 import pandas as pd
 import datetime as dt
-# from pprint import pprint
-# import time
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from func import tables as tb
@@ -39,6 +37,8 @@ class Visualization:
         else:
             self.fig, (self.main_ax) = plt.subplots(1, 1, gridspec_kw={'height_ratios': [7]}, figsize=self.figsize, sharex=True)
             self.axis_list = [self.main_ax]
+        
+        # self.xlim = self.main_ax.get_xlim() # пределы оси X для относительных рассчетов, ибо datetime не подходит
 
         # self.fig.set_dpi(120)
         self.fig.set_facecolor(self.win_color)
@@ -78,7 +78,7 @@ class Visualization:
             else:
                 break
         start = round(a + 0.51)
-        while start % 10 != 0:# and start % 5 != 0:
+        while start % 10 != 0:
             start += 1
         for i in gap_tops:
             if c > i:
@@ -212,9 +212,50 @@ class Visualization:
             colors=["black"]
         self.add_dict(chart_type="curve", chart=chart, data=df, colors=colors, linewidth=linewidth, transparency=transparency, h_lines=h_lines)
 
-    
-    def add_plot(self, data, chart_type, chart=None, colors=None, symbol=None, timeframe=None, c_name=None, cut_to_min=False, h_lines=[], marks=None, mark_size=None,  width=None, linewidth=None, transparency=None ):
-        # print(data, chart_type, chart, colors, symbol, timeframe, c_name, cut_to_min, h_lines, marks, mark_size,  width, linewidth, transparency)
+
+
+    def add_hlines(self, data, chart="main", symbol=None, timeframe=None, colors=["black"], linestyle='-', linewidth=0.4, transparency=.8, titles=[], xmins=[], xmaxs=[]):
+        if symbol:
+            self.symbol = symbol
+        if timeframe:
+            self.timeframe = timeframe
+        if type(data) in [str, int, float]:
+            data = [float(data)]
+        if len(colors) < len(data):
+            colors = colors + colors[-1:]*(len(data)-len(colors))
+        else:
+            colors = colors[:len(data)]
+        if len(titles) != len(data):
+            titles = []
+        if len(xmins) != len(data):
+            xmins = []
+        if len(xmaxs) != len(data):
+            xmaxs = []
+        self.add_dict(chart_type="hlines", chart=chart, data=data, colors=colors, linestyle=linestyle, linewidth=linewidth, transparency=transparency, titles=titles, xmins=xmins, xmaxs=xmaxs)
+
+
+
+
+    def add_plot(self, 
+                 data, 
+                 chart_type, 
+                 chart=None, 
+                 colors=None, 
+                 symbol=None, 
+                 timeframe=None, 
+                 c_name=None, 
+                 cut_to_min=False, 
+                 h_lines=[], 
+                 marks=None, 
+                 mark_size=None,  
+                 width=None, 
+                 linewidth=None, 
+                 transparency=None, 
+                 linestyle=None, 
+                 titles=None, 
+                 xmins=None, 
+                 xmaxs=None ):
+
         if timeframe:
             self.timeframe = timeframe
         if symbol:
@@ -256,8 +297,25 @@ class Visualization:
                 if not transparency:
                     transparency=.8
                 self.add_curve(data=data, chart=chart, c_name=c_name, colors=colors, linewidth=linewidth, transparency=transparency, h_lines=h_lines)
+            if chart_type == "hlines":
+                if not chart:
+                    chart = "main"
+                if not linestyle:
+                    linestyle = '-'
+                if not linewidth:
+                    linewidth = .4
+                if not transparency:
+                    transparency = .8
+                if not titles:
+                    titles = []
+                if not xmins:
+                    xmins = []
+                if not xmaxs:
+                    xmaxs = []
+                self.add_hlines(data=data, chart=chart, colors=colors, linewidth=linewidth, linestyle=linestyle, transparency=transparency, titles=titles, xmins=xmins, xmaxs=xmaxs)                  
         except:
             print("add_plot is not working")
+
 
 
     def candles_plot(self, params:dict):
@@ -348,20 +406,63 @@ class Visualization:
             if params["h_lines"]:
                 for hl in params["h_lines"]:
                     ax.axhline(y=hl, color=params["colors"][-1], linestyle='-', linewidth=0.4)
-            ax.plot(params["data"].index,
-                   params["data"]["value"],
-                   linewidth=params["linewidth"],
-                   color=params["colors"][0],
-                   alpha=params["transparency"]
-                   )
+        ax.plot(params["data"].index,
+                params["data"]["value"],
+                linewidth=params["linewidth"],
+                color=params["colors"][0],
+                alpha=params["transparency"]
+                )
 
 
-    def hline_plot(self, params:dict):
-        pass
-    
-    def vline_plot(sef, params:dict):
-        pass
-        
+    def hlines_plot(self, params:dict):
+        if params["chart"] == "main":
+            ax = self.main_ax
+        else:
+            ax = self.set_axis()
+
+        if type(self.df.index[0]) == pd._libs.tslibs.timestamps.Timestamp:
+            xlim = (self.df.index[-1], self.df.index[0] + dt.timedelta(minutes=int(self.timeframe)*5))
+            num_xlim = [mdates.date2num(x) for x in xlim]
+        else:
+            xlim = (self.df.index[-1], self.df.index[0])
+            num_xlim = xlim
+
+        if not params["xmins"]:
+            params["xmins"] = [xlim[0]]*len(params["data"])
+            num_xmins = [num_xlim[0]]*len(params["data"])
+            params["rel_xmins"] = [(x - num_xlim[0]) / (num_xlim[1] - num_xlim[0]) for x in num_xmins]
+        elif type(params["xmins"][0]) == pd._libs.tslibs.timestamps.Timestamp:
+            params["rel_xmins"] = [(mdates.date2num(x) - num_xlim[0]) / (num_xlim[1] - num_xlim[0]) for x in params["xmins"]]
+        else:
+            params["rel_xmins"] = [(x - num_xlim[0]) / (num_xlim[1] - num_xlim[0]) for x in params["xmins"]]
+        if not params["xmaxs"]:
+            params["xmaxs"] = [xlim[1]]*len(params["data"])
+            num_xmaxs = [num_xlim[1]]*len(params["data"])
+            params["rel_xmaxs"] = [(x - num_xlim[0]) / (num_xlim[1] - num_xlim[0]) for x in num_xmaxs]
+        elif type(params["xmaxs"][0]) == pd._libs.tslibs.timestamps.Timestamp:
+            params["rel_xmaxs"] = [(mdates.date2num(x) - num_xlim[0]) / (num_xlim[1] - num_xlim[0]) for x in params["xmaxs"]]
+        else:
+            params["rel_xmaxs"] = [(x - num_xlim[0]) / (num_xlim[1] - num_xlim[0]) for x in params["xmaxs"]]
+
+
+        for i in range(len(params["data"])):
+            if params["xmins"][i] >= xlim[0]:
+                ax.axhline(y=params["data"][i], 
+                        xmin=params["rel_xmins"][i], 
+                        xmax=params["rel_xmaxs"][i], 
+                        color=params["colors"][i], 
+                        linestyle=params["linestyle"], 
+                        linewidth=params["linewidth"])
+                if params["titles"]:
+                    ax.text(x=params["xmins"][i], 
+                            y=params["data"][i], 
+                            s=params["titles"][i], 
+                            ha='left', 
+                            color=params["colors"][i], 
+                            fontsize=12)
+                
+
+
     def visualize(self):
         for i in self.plotting_list:
             if i["chart_type"] == "candles":
@@ -374,4 +475,6 @@ class Visualization:
                 self.bar_plot(i)
             elif i["chart_type"] == "curve":
                 self.curve_plot(i)
+            elif i["chart_type"] == "hlines":
+                self.hlines_plot(i)
         self.plotting_list = []

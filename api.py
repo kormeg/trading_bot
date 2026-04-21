@@ -17,7 +17,7 @@ class API():
     intervals = ["5", "15", "60"]
     oi_intervals = ["5min", "15min", "1h"]
     ignored_symbols = []
-    position_list = ['symbol', 'side', 'size', 'entryPrice', "leverage", 'positionValue', 'takeProfit', 'stopLoss', 'trailingStop', 'createdTime', 'updatedTime', 'tpslMode', 'liqPrice', 'breakEvenPrice', 'isReduceOnly', 'positionStatus', 'curRealisedPnl', 'cumRealisedPnl']
+    position_items = ['symbol', 'side', 'size', 'entryPrice', "leverage", 'positionValue', 'takeProfit', 'stopLoss', 'trailingStop', 'createdTime', 'updatedTime', 'tpslMode', 'liqPrice', 'breakEvenPrice', 'isReduceOnly', 'positionStatus', 'curRealisedPnl', 'cumRealisedPnl', 'unrealisedPnl']
 
     def __init__(self, api_key=None, secret_key=None, demo=True, websocket=True):
 
@@ -25,8 +25,43 @@ class API():
         self.deals = {}
         self.deal_news = False
         self.balance_news = False
+        self.public_ws = None
+        self.private_ws = None
+        self.client = None
+        self.demo=demo
 
-        
+        while True:
+            try:
+                self.api_connection(api_key, secret_key, demo)
+            except:
+                time.sleep(1)
+            else:
+                break
+
+        self.get_deals()
+        pprint(self.deals)
+        self.get_data_dict()
+        self.all_symbols = list(self.data)
+
+        if websocket:
+            while True:
+                try:
+                    self.public_ws_connection()
+                except:
+                    time.sleep(1)
+                else:
+                    break
+            while True:
+                try:
+                    self.private_ws_connection(api_key, secret_key)
+                except:
+                    time.sleep(1)
+                else:
+                    break
+            
+
+
+    def api_connection(self, api_key, secret_key, demo):
         self.client = HTTP(
             api_key=api_key,
             api_secret=secret_key,
@@ -34,32 +69,33 @@ class API():
             max_retries=200,
             retry_delay=3,
             demo=demo,
-            # recv_window=60000
         )
+    
 
-        self.get_data_dict()
-        self.all_symbols = list(self.data)
-        
-        if websocket:
-            self.ws = WebSocket(
+
+    def public_ws_connection(self):
+        self.public_ws = WebSocket(
                 testnet=False,
                 channel_type="linear",
                 retries=200,
                 restart_on_error=True,
             )
             
-            for symb in self.get_symbol_list():
-                self.ws.ticker_stream(
-                        symbol=symb,
-                        callback=self.handle_message
-                    )
-                for inter in API.intervals:
-                    self.ws.kline_stream(
-                        interval=inter,
-                        symbol=symb,
-                        callback=self.handle_message
-                        ) 
-            self.private_ws = WebSocket(
+        for symb in self.get_symbol_list():
+            self.public_ws.ticker_stream(
+                    symbol=symb,
+                    callback=self.handle_message
+                )
+            for inter in API.intervals:
+                self.public_ws.kline_stream(
+                    interval=inter,
+                    symbol=symb,
+                    callback=self.handle_message
+                    ) 
+                
+
+    def private_ws_connection(self, api_key, secret_key):
+        self.private_ws = WebSocket(
                 testnet=False,
                 channel_type="private",
                 api_key=api_key,
@@ -67,16 +103,13 @@ class API():
                 retries=200,
                 restart_on_error=True
             )
-            self.private_ws.position_stream(callback=self.private_handle)
-            self.private_ws.order_stream(callback=self.private_handle)
-            self.private_ws.wallet_stream(callback=self.private_handle)
-            self.private_ws.execution_stream(callback=self.private_handle)
+        self.private_ws.position_stream(callback=self.private_handle)
+        self.private_ws.wallet_stream(callback=self.private_handle)
 
 
 
     def private_handle(self, message):
         self.private_mail.append(message)
-        
 
 
     
@@ -87,9 +120,7 @@ class API():
                 if self.private_mail[0]["topic"] == "position":
                     for j in self.private_mail[0]["data"]:
                         symb = j["symbol"] 
-                        # creation_time = j["createdTime"] # лишняя переменная
-                        d = {k:v for k,v in j.items() if k in API.position_list}
-                        # d["createdTime"] = pd.to_datetime(d["createdTime"], unit="ms").strftime("%d.%m.%Y %H:%M:%S")
+                        d = {k:v for k,v in j.items() if k in API.position_items}
                         if symb in list(self.deals):
                             if d["size"] != "0":
                                 if self.deals[symb] != d:
@@ -122,8 +153,7 @@ class API():
                                 self.deal_news=True
                                 for k, v in self.deals[symb].items():
                                     print(f"{k} : {v}")
-                            else:
-                                # self.closed_deals[symb + "_" +d["createdTime"]] = d            
+                            else:          
                                 print("the deal is closed")
                             print("----------------------------------")
                             self.deal_news = True
@@ -214,7 +244,6 @@ class API():
             df = pd.DataFrame(candles)
         if self.params.get("volume", True):
             df = df.iloc[:,:7]
-            # df = df.drop(5, axis=1)
             df.columns=["time", "open", "high", "low", "close", "coin_volume", "volume"]
         else:
             df = df.iloc[:,:5]
@@ -249,7 +278,6 @@ class API():
             self.intervals = [str(intervals)]
         else:
             self.intervals = [str(x) for x in intervals]
-        # self.data = {}
         self.params = dict(last_closed=last_closed,
                            volume=volume,
                            open_interest=open_interest,
@@ -260,7 +288,6 @@ class API():
                            set_pf=set_pf)
         
         for symb in self.symbols:
-            # symb_dict = {}
             for inter in self.intervals:
                 while True:
                     try:
@@ -339,6 +366,7 @@ class API():
                             )
 
                     if last_data.head(1).index != self.data[symb]["intervals"][inter]["data"].head(1).index:
+                        
                         self.data[symb]["intervals"][inter]["data"].loc[last_data.index[0]] = last_data.values[0]
                         self.data[symb]["intervals"][inter]["data"].sort_index(inplace=True, ascending=False)
                         if not collect:
@@ -410,7 +438,7 @@ class API():
 
     
     
-    def create_order(self, symbol, side, qty, order_type, stop_loss, take_profit=0, price=None, trailing_stop=False, trail_act_price=False):
+    def create_order(self, symbol, side, qty, order_type="market", stop_loss=0, take_profit=0, leverage=3, trailing_stop=None, trail_act_price=None, price=None):
         try: 
             result = self.client.place_order(
                 category="linear", 
@@ -421,19 +449,23 @@ class API():
                 price=price, 
                 stopLoss=stop_loss,
                 takeProfit=take_profit,
-                leverage =  2,
             )
+            lever = self.client.set_leverage(
+                category="linear",
+                symbol=symbol,
+                buyLeverage=str(leverage),
+                sellLeverage=str(leverage)
+                )
             if trailing_stop and trail_act_price:
                 response = self.client.set_trading_stop(
                     category="linear",
                     symbol=symbol,
                     trailingStop=trailing_stop,
                     activePrice=trail_act_price,
-                    position_idx=0,                          # 0 — односторонний режим; 1/2 — хедж-режим
-                    tpsl_mode="Full"                         # режим TP/SL: Full (вся позиция) или Partial (часть)
+                    position_idx=0,                      
+                    tpsl_mode="Full"                         
                     )
-
-
+                
         except exceptions.InvalidRequestError as e:
             print("Bybit Request Error", e.status_code, e.message, sep=" | ")
         except exceptions.FailedRequestError as e:
@@ -442,6 +474,22 @@ class API():
             print(e)
         else:
             return result
+        
+    
+    def set_tpsl(self, symbol, tp=None, sl=None, trailing_stop=None, trail_act_price=None):
+        params = {"category": "linear", 
+                  "symbol": symbol, 
+                  "position_idx":0,                               # 0 — односторонний режим; 1/2 — хедж-режим
+                  "tpsl_mode":"Full"}                             # режим TP/SL: Full (вся позиция) или Partial (часть)   
+        if tp:
+            params["takeProfit"] = tp
+        if sl:
+            params["stopLoss"] = sl
+        if trailing_stop and trail_act_price:
+            params["trailingStop"] = trailing_stop
+            params["activePrice"] = trail_act_price
+        response = self.client.set_trading_stop(**params)
+        print(response)
         
 
 
@@ -459,9 +507,7 @@ class API():
         while True:
             try:
                 r = self.client.get_instruments_info(category="linear", limit=1000)["result"]["list"]
-                # l = [x["symbol"] for x in r]
                 l = [x["symbol"] for x in r if re.findall(r'\w+USDT$', x["symbol"])]
-                # l = l = [x["symbol"] for x in r if x["symbol"][0] == "A"]
                 return l
             except:
                 time.sleep(1)
@@ -482,40 +528,23 @@ class API():
 
     def get_one(self, symbol, interval):
         return self.data[symbol][interval]["data"]
+    
 
 
+    def get_deals(self, symbol=False):
+        if symbol:
+            position = self.client.get_positions(category="linear", symbol=symbol)
+            position = {k:v for k,v in position["result"]["list"][0].items() if k in API.position_items+["avgPrice"]}
+            position["entryPrice"] = position["avgPrice"]
+            print(position)
+            return position
 
+        else:
+            positions = self.client.get_positions(category="linear", settleCoin="USDT")
+            for i in positions["result"]["list"]:
+                self.deals[i["symbol"]] = {k:v for k,v in i.items() if k in API.position_items+["avgPrice"]}
+                self.deals[i["symbol"]]["entryPrice"] = self.deals[i["symbol"]]["avgPrice"]
 
-# for i in cl.data:
-#     df = cl.data[i][1]["data"]
-#     print(df.head())
-#     df["5m_time"] = df[df["time"].dt.minute%5==0]["time"]
-#     df["5m_time"] = df["5m_time"].fillna(method="bfill")
-#     df["15m_time"] = df[df["time"].dt.minute%15==0]["time"]
-#     df["15m_time"] = df["15m_time"].fillna(method="bfill")
-#     vol5 = df.groupby("5m_time").agg(
-#         {
-#             "open" : "last",
-#             "high" : "max",    
-#             "low" : "min",
-#             "close" : "first",
-#             "volume" : "sum"
-            
-#         }
-#     ).iloc[::-1]
-
-#     vol15 = df.groupby("15m_time").agg(
-#         {
-#             "open" : "last",
-#             "high" : "max",
-#             "low" : "min",
-#             "close" : "first",
-#             "volume" : "sum"
-            
-#         }
-#     ).iloc[::-1]
-#     print(vol5.head())
-#     print(vol15.head())
 
 
 
