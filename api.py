@@ -25,18 +25,10 @@ class API():
         self.deals = {}
         self.deal_news = False
         self.balance_news = False
-        self.public_ws = None
-        self.private_ws = None
-        self.client = None
         self.demo=demo
 
-        while True:
-            try:
-                self.api_connection(api_key, secret_key, demo)
-            except:
-                time.sleep(1)
-            else:
-                break
+
+        self.api_connection(api_key, secret_key, demo)
 
         self.get_deals()
         pprint(self.deals)
@@ -44,67 +36,96 @@ class API():
         self.all_symbols = list(self.data)
 
         if websocket:
-            while True:
-                try:
-                    self.public_ws_connection()
-                except:
-                    time.sleep(1)
-                else:
-                    break
-            while True:
-                try:
-                    self.private_ws_connection(api_key, secret_key)
-                except:
-                    time.sleep(1)
-                else:
-                    break
+            self.public_ws_connection()
+            self.private_ws_connection(api_key, secret_key)
+
             
 
 
     def api_connection(self, api_key, secret_key, demo):
-        self.client = HTTP(
-            api_key=api_key,
-            api_secret=secret_key,
-            testnet=False,
-            max_retries=200,
-            retry_delay=3,
-            demo=demo,
-        )
+        while True:
+            try:
+                self.client = HTTP(
+                    api_key=api_key,
+                    api_secret=secret_key,
+                    testnet=False,
+                    max_retries=200,
+                    retry_delay=3,
+                    demo=demo,
+                    # recv_window=60000
+                )
+            except:
+                time.sleep(1)
+            else:
+                break
     
 
 
     def public_ws_connection(self):
-        self.public_ws = WebSocket(
-                testnet=False,
-                channel_type="linear",
-                retries=200,
-                restart_on_error=True,
-            )
-            
-        for symb in self.get_symbol_list():
-            self.public_ws.ticker_stream(
-                    symbol=symb,
-                    callback=self.handle_message
-                )
-            for inter in API.intervals:
-                self.public_ws.kline_stream(
-                    interval=inter,
-                    symbol=symb,
-                    callback=self.handle_message
-                    ) 
-                
+        while True:
+            try:
+                self.public_ws = WebSocket(
+                        testnet=False,
+                        channel_type="linear",
+                        retries=200,
+                        restart_on_error=True,
+                    )
+                    
+                for symb in self.get_symbol_list():
+                    self.public_ws.ticker_stream(
+                            symbol=symb,
+                            callback=self.handle_message
+                        )
+                    for inter in API.intervals:
+                        self.public_ws.kline_stream(
+                            interval=inter,
+                            symbol=symb,
+                            callback=self.handle_message
+                            ) 
+            except:
+                time.sleep(1)
+            else:
+                break
+
+
 
     def private_ws_connection(self, api_key, secret_key):
-        self.private_ws = WebSocket(
-                testnet=False,
-                channel_type="private",
-                api_key=api_key,
-                api_secret=secret_key,
-                retries=200,
-                restart_on_error=True
-            )
-        self.private_ws.position_stream(callback=self.private_handle)
-        self.private_ws.wallet_stream(callback=self.private_handle)
+        while True:
+            try:
+                self.private_ws = WebSocket(
+                        testnet=False,
+                        channel_type="private",
+                        api_key=api_key,
+                        api_secret=secret_key,
+                        retries=200,
+                        restart_on_error=True
+                    )
+                self.private_ws.position_stream(callback=self.private_handle)
+                # self.private_ws.order_stream(callback=self.private_handle)
+                self.private_ws.wallet_stream(callback=self.private_handle)
+                # self.private_ws.execution_stream(callback=self.private_handle)
+            except:
+                time.sleep(1)
+            else:
+                break
+
+
+
+    def is_ws_connect(self, ws):
+        try:
+            if not hasattr(ws, 'ws'): 
+                return False
+            if not ws.ws:
+                return False
+            if not ws.ws.sock:
+                return False
+            if not ws.ws.sock.connected:
+                return False
+            # if ws.ws.sock.status != 101:  
+            #     return False
+            return True
+        except Exception:
+            return False
 
 
 

@@ -66,7 +66,7 @@ class GUI():
                 with open(self.history_path, "r", encoding="utf-8") as f:
                     self.history = json.load(f)
             except:
-                self.history = {}
+                print("нет истории")
         else:
             self.indicators = self.settings.get("last_indicators", {})
         if not all(item in list(st.Strategy.indicators) for item in list(self.indicators)):
@@ -332,6 +332,12 @@ class GUI():
     def set_strategy(self, name):
         self.strategy = st.Strategy(name)
         self.indicators = self.strategy.strategy_dict["indicators"]
+        self.history_path = self.settings_path.rstrip("settings.json")+self.strategy.name+"/history.json"
+        try:
+            with open(self.history_path, "r", encoding="utf-8") as f:
+                self.history = json.load(f)
+        except:
+            print("нет истории")
         self.make_menu()
         self.fill_menu()
         self.make_widgets()
@@ -439,8 +445,11 @@ class GUI():
             message = "\n-------------------\n-----start trading-----\n"
         now = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.history[time.time()] = {"time": now, "trading": message}
-        with open(self.history_path, "w", encoding="utf-8") as f:
-            json.dump(self.history, f, indent=4, ensure_ascii=False)
+        try:
+            with open(self.history_path, "w", encoding="utf-8") as f:
+                json.dump(self.history, f, indent=4, ensure_ascii=False)
+        except:
+            print("отсутствует стратегия")
         self.make_widgets()
 
 
@@ -459,37 +468,51 @@ class GUI():
                         natr = GUI.natr(self.client.data[symb]["intervals"]["15"]["data"]) 
                     else:
                         natr = self.client.data[symb]["natr"]
-                    deal = self.strategy.stg.trade(self.client, self.strategy, symb, inter, natr, 14, -100, 2, 1)
+                    deal = self.strategy.stg.trade(self.client, self.strategy, symb, inter, natr, 14, 0, 2, 1)
                     if deal:
-                        if len(list(self.client.deals)) < 5 or symb in list(self.client.deals):
-                            if symb in list(self.client.deals):
-                                position = self.client.get_deals(symb)
-                                side = "Buy" if position["side"] == "Sell" else "Sell"
-                                self.client.create_order(symbol=position["symbol"], side=side, qty=position["size"], leverage=1)
-                                while not self.client.private_mail:
-                                    time.sleep(0.1)
-                                self.client.sort_private_mail()
-                                print("----------------------------------------------")
-                                print("Перезаход")
-                            elif len(list(self.client.deals)) < 5:
-                                print("----------------------------------------------")
-                                print("deal")
+                        if symb in list(self.client.deals):
+                            position = self.client.get_deals(symb)
+                            if position["side"] != deal["side"]:
+                                k = symb + "_" + position["entryPrice"]+position["size"]
+                                h_position = self.history[k]
+                                if (inter == "15" or (inter == "5" and h_position["timeframe"] == "5")) and float(position["unrealisedPnl"]) > 0:
+                                    side = "Buy" if position["side"] == "Sell" else "Sell"
+                                    self.client.create_order(symbol=position["symbol"], side=side, qty=position["size"], leverage=1)
+                                    while not self.client.private_mail:
+                                        time.sleep(0.1)
+                                    self.client.sort_private_mail()
+                                    print("----------------------------------------------")
+                                    print("Перезаход")
+                                    self.new_deals[symb]=deal
+                                    self.order = self.client.create_order(
+                                        symbol=symb, side=deal["side"], 
+                                        qty=deal["deal_price"], 
+                                        order_type=self.strategy.strategy_dict["order_type"], 
+                                        stop_loss=deal["stop_loss"], 
+                                        # trailing_stop= deal["trailing_stop"], 
+                                        # trail_act_price=deal["trail_act_price"], 
+                                        take_profit=deal["take_profit"])
+                        elif len(list(self.client.deals)) < 5:
+                            print("----------------------------------------------")
+                            print("deal")
                             self.new_deals[symb]=deal
                             self.order = self.client.create_order(
                                 symbol=symb, side=deal["side"], 
                                 qty=deal["deal_price"], 
                                 order_type=self.strategy.strategy_dict["order_type"], 
                                 stop_loss=deal["stop_loss"], 
+                                # trailing_stop= deal["trailing_stop"], 
+                                # trail_act_price=deal["trail_act_price"], 
                                 take_profit=deal["take_profit"])
-                     
-                            while not self.client.private_mail:
-                                    time.sleep(0.1)
-                            self.client.sort_private_mail()
-                            difference = float(self.client.deals[symb]["entryPrice"]) - float(deal["identification_price"])
-                            if difference != 0:
-                                stop_loss = str(float(deal["stop_loss"])+difference)
-                                take_profit = str(float(deal["take_profit"])+difference)
-                                self.client.set_tpsl(symbol=symb, tp=take_profit, sl=stop_loss)#, trail_act_price=trail_act_price, trailing_stop=trailing_stop)
+                
+                        while not self.client.private_mail:
+                                time.sleep(0.1)
+                        self.client.sort_private_mail()
+                        difference = float(self.client.deals[symb]["entryPrice"]) - float(deal["identification_price"])
+                        if difference != 0:
+                            stop_loss = str(float(deal["stop_loss"])+difference)
+                            take_profit = str(float(deal["take_profit"])+difference)
+                            self.client.set_tpsl(symbol=symb, tp=take_profit, sl=stop_loss)#, trail_act_price=trail_act_price, trailing_stop=trailing_stop)
                     
                     self.client.sort_private_mail()
                     if self.client.deal_news:

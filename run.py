@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 import importlib.util
-# from importlib.metadata import version as get_version
+from importlib.metadata import version as get_version
 
 # Список необходимых библиотек
 required_modules = {"pybit" : "5.7.0", 
@@ -14,15 +14,52 @@ required_modules = {"pybit" : "5.7.0",
 
 # проверка наличия и установка библиотек
 for module, version in required_modules.items():
-    try:
-        subprocess.check_call([
-            sys.executable, "-m", "pip", "install", "--upgrade", f"{module}=={version}"
-        ])
-    except subprocess.CalledProcessError as e:
-        print(f"✗ Ошибка при установке {module}: {e}")
-        print(f"Критическая ошибка: не удалось установить {module}")
-        sys.exit(1)
-        
+    if importlib.util.find_spec(module) is not None:
+        vers = get_version(module)
+        if vers != version:
+            print(f"Модуль {module} присутствует в системе")
+            print("Установлена неподходящая версия")
+            try:
+                subprocess.check_call([
+                    sys.executable, "-m", "pip", "install", "--upgrade", f"{module}=={version}"
+                ])
+                print(f"Необходимая версия {module} успешно установлена")
+            except subprocess.CalledProcessError as e:
+                print(f"Ошибка при установке {module}: {e}")
+                print(f"Критическая ошибка: не удалось установить {module}")
+        else:
+            print(f"Модуль {module} уже установлен")
+    else:
+        try:
+            print(f"Модуль {module} не найден, устанавливается...")
+            subprocess.check_call([
+                sys.executable, "-m", "pip", "install", "--upgrade", f"{module}=={version}"
+            ])
+            print(f"Необходимая версия {module} успешно установлена")
+        except subprocess.CalledProcessError as e:
+            print(f"Ошибка при установке {module}: {e}")
+            print(f"Критическая ошибка: не удалось установить {module}")
+            sys.exit(1)
+print("Все пакеты готовы к использованию!")
+    
+            # subprocess.check_call([
+            #     sys.executable, "-m", "pip", "install", "--upgrade", f"{module}=={version}"
+            # ])
+
+#         print(f"✓ Модуль {module} уже установлен")
+#     else:
+#         print(f"Модуль {module} не найден, устанавливается...")
+#         try:
+#             subprocess.check_call([
+#                 sys.executable, "-m", "pip", "install", module
+#             ])
+#             print(f"✓ Пакет {module} успешно установлен")
+#         except subprocess.CalledProcessError as e:
+#             print(f"✗ Ошибка при установке {module}: {e}")
+#             print(f"Критическая ошибка: не удалось установить {module}")
+#             sys.exit(1)
+# print("Все пакеты готовы к использованию!")
+
 import bot
 
 
