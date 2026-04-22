@@ -12,13 +12,14 @@ import datetime as dt
 from functools import partial
 import time
 import json
+import os
 
 
 
 class GUI():
     app_name = "SUPER-DUPER BOT ULTIMATE-3000"
-    app_width = 1600
-    app_height = 800
+    # app_width = 1600
+    # app_height = 800
     chart_length = 200
     grid_rows = 12
     grid_cols = 12
@@ -75,10 +76,13 @@ class GUI():
         self.window = tk.Tk()
         self.window.title(GUI.app_name)
         screen_width = self.window.winfo_screenwidth()
-        screen_height = self.window.winfo_screenheight() 
-        x = int((screen_width/2) - GUI.app_width/2)
-        y = int((screen_height)/2 - GUI.app_height/2)
-        self.window.geometry(f"{GUI.app_width}x{GUI.app_height}+{x}+{y}")
+        screen_height = self.window.winfo_screenheight()
+        self.app_width = round(screen_width/4*3)
+        self.app_height = round(screen_height/3*2)
+
+        x = int((screen_width/2) - self.app_width/2)
+        y = int((screen_height)/2 - self.app_height/2)
+        self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
         for i in range(GUI.grid_rows):
             self.window.rowconfigure(i, weight=1)
@@ -191,7 +195,7 @@ class GUI():
                 self.output_window.see("end")
 
             self.balance = self.client.balance["USDT"]
-            self.money_info = tk.Label(self.window, text=f"Баланс:  {self.balance}", wraplength=GUI.app_width/6.5, 
+            self.money_info = tk.Label(self.window, text=f"Баланс:  {self.balance}", wraplength=self.app_width/6.5, 
                                        background="blue", anchor="w", font=40)
             self.money_info.grid(row = 9, column=0, sticky="nsew")
             self.widgets.append(self.money_info)
@@ -209,9 +213,9 @@ class GUI():
 
         # elif self.mode == "edit":
             if not self.vol_cut:
-                self.volty_button = tk.Button(self.window, text = "отобрать волатильные монеты", wraplength=GUI.app_width/12.5, command= self.vol_cut_on_off)
+                self.volty_button = tk.Button(self.window, text = "отобрать волатильные монеты", wraplength=self.app_width/12.5, command= self.vol_cut_on_off)
             else:
-                self.volty_button = tk.Button(self.window, text = "оставить текущие монеты", wraplength=GUI.app_width/12.5, command= self.vol_cut_on_off)
+                self.volty_button = tk.Button(self.window, text = "оставить текущие монеты", wraplength=self.app_width/12.5, command= self.vol_cut_on_off)
             self.volty_button.grid(row=0, column=7, sticky="nsew")
             self.widgets.append(self.volty_button)
 
@@ -347,6 +351,7 @@ class GUI():
             self.live_chart(vn.Visualization(params={"add_windows":self.add_winds}))
         plt.draw()
         self.settings["last_strategy"] = self.strategy.name
+        self.settings["last_indicators"] = self.indicators
 
         with open(self.settings_path, "w", encoding="utf-8") as f:
             json.dump(self.settings, f, indent=4, ensure_ascii=False)
@@ -446,6 +451,8 @@ class GUI():
         now = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.history[time.time()] = {"time": now, "trading": message}
         try:
+            if not os.path.exists(self.settings_path.rstrip("settings.json")+self.strategy.name):
+                os.mkdir(self.settings_path.rstrip("settings.json")+self.strategy.name)
             with open(self.history_path, "w", encoding="utf-8") as f:
                 json.dump(self.history, f, indent=4, ensure_ascii=False)
         except:
@@ -468,7 +475,7 @@ class GUI():
                         natr = GUI.natr(self.client.data[symb]["intervals"]["15"]["data"]) 
                     else:
                         natr = self.client.data[symb]["natr"]
-                    deal = self.strategy.stg.trade(self.client, self.strategy, symb, inter, natr, 14, 0, 2, 1)
+                    deal = self.strategy.stg.trade(self.client, self.strategy, symb, inter, natr, 14, 0, 1, 1)
                     if deal:
                         if symb in list(self.client.deals):
                             position = self.client.get_deals(symb)

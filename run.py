@@ -41,27 +41,8 @@ for module, version in required_modules.items():
             print(f"Критическая ошибка: не удалось установить {module}")
             sys.exit(1)
 print("Все пакеты готовы к использованию!")
-    
-            # subprocess.check_call([
-            #     sys.executable, "-m", "pip", "install", "--upgrade", f"{module}=={version}"
-            # ])
-
-#         print(f"✓ Модуль {module} уже установлен")
-#     else:
-#         print(f"Модуль {module} не найден, устанавливается...")
-#         try:
-#             subprocess.check_call([
-#                 sys.executable, "-m", "pip", "install", module
-#             ])
-#             print(f"✓ Пакет {module} успешно установлен")
-#         except subprocess.CalledProcessError as e:
-#             print(f"✗ Ошибка при установке {module}: {e}")
-#             print(f"Критическая ошибка: не удалось установить {module}")
-#             sys.exit(1)
-# print("Все пакеты готовы к использованию!")
 
 import bot
-
 
 # # синхронизация времени
 os.system('w32tm /resync')
