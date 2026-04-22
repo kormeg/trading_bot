@@ -81,7 +81,7 @@ class GUI():
         self.app_height = round(screen_height/3*2)
 
         x = int((screen_width/2) - self.app_width/2)
-        y = int((screen_height)/2 - self.app_height/2)
+        y = int((screen_height/2) - self.app_height/2)
         self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
         for i in range(GUI.grid_rows):
