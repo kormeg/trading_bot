@@ -77,8 +77,8 @@ class GUI():
         self.window.title(GUI.app_name)
         screen_width = self.window.winfo_screenwidth()
         screen_height = self.window.winfo_screenheight()
-        self.app_width = round(screen_width/4*3)
-        self.app_height = round(screen_height/3*2)
+        self.app_width = int(screen_width/4*3)
+        self.app_height = int(screen_height/3*2)
 
         x = int((screen_width/2) - self.app_width/2)
         y = int((screen_height/2) - self.app_height/2)

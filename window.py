@@ -35,7 +35,7 @@ class Window():
         screen_width = self.window.winfo_screenwidth()
         screen_height = self.window.winfo_screenheight()
         x = int((screen_width/2) - width/2)
-        y = int((screen_height)/2 - height/2)
+        y = int((screen_height/2) - height/2)
         self.window.geometry(f"{width}x{height}+{x}+{y}")
         self.interrupt=interrupt
         self.closing_window=closing_window
