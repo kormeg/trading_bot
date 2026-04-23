@@ -83,6 +83,7 @@ class API():
                             callback=self.handle_message
                             ) 
             except:
+                print("public websocket не пашет")
                 time.sleep(1)
             else:
                 break
@@ -105,6 +106,7 @@ class API():
                 self.private_ws.wallet_stream(callback=self.private_handle)
                 # self.private_ws.execution_stream(callback=self.private_handle)
             except:
+                print("private websocket не пашет")
                 time.sleep(1)
             else:
                 break

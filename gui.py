@@ -74,9 +74,9 @@ class GUI():
             self.indicators = {k:v for k, v in self.indicators.items() if k in list(st.Strategy.indicators)}
 
         self.window = tk.Tk()
-        self.window.tk.call('tk', 'scaling', 1.0)
-        self.window.update_idletasks()  # Пересчёт размеров и позиций
-        self.window.update() 
+        # self.window.tk.call('tk', 'scaling', 1.0)
+        # self.window.update_idletasks()  # Пересчёт размеров и позиций
+        # self.window.update() 
         self.window.title(GUI.app_name)
         
         screen_width = self.window.winfo_screenwidth()
@@ -295,9 +295,9 @@ class GUI():
     def update_chart(self):
         if not self.client.client:
             self.client.api_connection(self.settings["api_key"], self.settings["secret_key"], self.client.demo)
-        if not self.client.public_ws:
+        if not self.client.is_ws_connect(self.client.public_ws):
             self.client.public_ws_connection()
-        if not self.client.private_ws:
+        if not self.client.is_ws_connect(self.client.private_ws):
             self.client.private_ws_connection(self.settings["api_key"], self.settings["secret_key"])
         for ax in self.chart.axis_list:
             ax.clear()
