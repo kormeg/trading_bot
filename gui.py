@@ -13,6 +13,7 @@ from functools import partial
 import time
 import json
 import os
+from ctypes import windll
 
 
 
@@ -74,9 +75,10 @@ class GUI():
             self.indicators = {k:v for k, v in self.indicators.items() if k in list(st.Strategy.indicators)}
 
         self.window = tk.Tk()
-        # self.window.tk.call('tk', 'scaling', 1.0)
-        # self.window.update_idletasks()  # Пересчёт размеров и позиций
-        # self.window.update() 
+        dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
+        self.window.tk.call('tk', 'scaling', dpi / 72)
+        self.window.update_idletasks()  # Пересчёт размеров и позиций
+        self.window.update() 
         self.window.title(GUI.app_name)
         
         screen_width = self.window.winfo_screenwidth()
@@ -110,7 +112,7 @@ class GUI():
         print(f"Высота экрана: {self.window.winfo_screenheight()}")
         print(f"Масштаб Tk: {self.window.tk.call('tk', 'scaling')}")
         try:
-            from ctypes import windll
+            
             dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
             print(f"DPI окна: {dpi}")
         except:

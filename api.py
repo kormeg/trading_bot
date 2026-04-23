@@ -128,6 +128,17 @@ class API():
             return True
         except Exception:
             return False
+        
+    
+    # def is_http_connect(self, client):
+    #     try:
+    #         response = client.get_server_time()
+    #         # Проверяем, что ответ содержит поле time_now
+    #         if 'result' in response and 'time_now' in response['result']:
+    #             return True
+    #         return False
+    #     except Exception:
+    #         return False
 
 
 
@@ -556,17 +567,28 @@ class API():
 
     def get_deals(self, symbol=False):
         if symbol:
-            position = self.client.get_positions(category="linear", symbol=symbol)
-            position = {k:v for k,v in position["result"]["list"][0].items() if k in API.position_items+["avgPrice"]}
-            position["entryPrice"] = position["avgPrice"]
-            print(position)
-            return position
+            while True:
+                try:
+                    position = self.client.get_positions(category="linear", symbol=symbol)
+                    position = {k:v for k,v in position["result"]["list"][0].items() if k in API.position_items+["avgPrice"]}
+                    position["entryPrice"] = position["avgPrice"]
+                    print(position)
+                    return position
+                except:
+                    time.sleep(1)
+                    
 
         else:
-            positions = self.client.get_positions(category="linear", settleCoin="USDT")
-            for i in positions["result"]["list"]:
-                self.deals[i["symbol"]] = {k:v for k,v in i.items() if k in API.position_items+["avgPrice"]}
-                self.deals[i["symbol"]]["entryPrice"] = self.deals[i["symbol"]]["avgPrice"]
+            while True:
+                try:
+                    positions = self.client.get_positions(category="linear", settleCoin="USDT")
+                    for i in positions["result"]["list"]:
+                        self.deals[i["symbol"]] = {k:v for k,v in i.items() if k in API.position_items+["avgPrice"]}
+                        self.deals[i["symbol"]]["entryPrice"] = self.deals[i["symbol"]]["avgPrice"]
+                except:
+                    time.sleep(1)
+                else:
+                    break
 
 
 
