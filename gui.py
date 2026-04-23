@@ -75,6 +75,7 @@ class GUI():
 
         self.window = tk.Tk()
         self.window.title(GUI.app_name)
+        self.window.tk.call('tk', 'scaling', 1.0)
         screen_width = self.window.winfo_screenwidth()
         screen_height = self.window.winfo_screenheight()
         self.app_width = int(screen_width/4*3)
@@ -100,16 +101,18 @@ class GUI():
         self.fill_menu()
         self.make_widgets()
         self.live_chart(vn.Visualization(params={"add_windows" : self.add_winds}))
-        print(f"Ширина экрана: {self.window.winfo_screenwidth()}")
-        print(f"Высота экрана: {self.window.winfo_screenheight()}")
-        print(f"Масштаб Tk: {self.window.tk.call('tk', 'scaling')}")
-        try:
-            from ctypes import windll
-            dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
-            print(f"DPI окна: {dpi}")
-        except:
-            print("DPI: недоступно (не Windows или старая версия)")
-        print(f"Геометрия окна: {self.window.geometry()}")
+        
+        # диагностика
+        # print(f"Ширина экрана: {self.window.winfo_screenwidth()}")
+        # print(f"Высота экрана: {self.window.winfo_screenheight()}")
+        # print(f"Масштаб Tk: {self.window.tk.call('tk', 'scaling')}")
+        # try:
+        #     from ctypes import windll
+        #     dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
+        #     print(f"DPI окна: {dpi}")
+        # except:
+        #     print("DPI: недоступно (не Windows или старая версия)")
+        # print(f"Геометрия окна: {self.window.geometry()}")
 
 
 
