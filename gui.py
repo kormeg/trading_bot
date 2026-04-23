@@ -100,6 +100,16 @@ class GUI():
         self.fill_menu()
         self.make_widgets()
         self.live_chart(vn.Visualization(params={"add_windows" : self.add_winds}))
+        print(f"Ширина экрана: {self.window.winfo_screenwidth()}")
+        print(f"Высота экрана: {self.window.winfo_screenheight()}")
+        print(f"Масштаб Tk: {self.window.tk.call('tk', 'scaling')}")
+        try:
+            from ctypes import windll
+            dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
+            print(f"DPI окна: {dpi}")
+        except:
+            print("DPI: недоступно (не Windows или старая версия)")
+        print(f"Геометрия окна: {self.window.geometry()}")
 
 
 
@@ -484,42 +494,79 @@ class GUI():
                                 h_position = self.history[k]
                                 if (inter == "15" or (inter == "5" and h_position["timeframe"] == "5")) and float(position["unrealisedPnl"]) > 0:
                                     side = "Buy" if position["side"] == "Sell" else "Sell"
-                                    self.client.create_order(symbol=position["symbol"], side=side, qty=position["size"], leverage=1)
-                                    while not self.client.private_mail:
-                                        time.sleep(0.1)
-                                    self.client.sort_private_mail()
-                                    print("----------------------------------------------")
-                                    print("Перезаход")
-                                    self.new_deals[symb]=deal
-                                    self.order = self.client.create_order(
-                                        symbol=symb, side=deal["side"], 
-                                        qty=deal["deal_price"], 
-                                        order_type=self.strategy.strategy_dict["order_type"], 
-                                        stop_loss=deal["stop_loss"], 
-                                        # trailing_stop= deal["trailing_stop"], 
-                                        # trail_act_price=deal["trail_act_price"], 
-                                        take_profit=deal["take_profit"])
-                        elif len(list(self.client.deals)) < 5:
+                                    try:
+                                        self.client.create_order(symbol=position["symbol"], side=side, qty=position["size"], leverage=1)
+                                        while not self.client.private_mail:
+                                            time.sleep(0.1)
+                                        self.client.sort_private_mail()
+                                        if symb not in list(self.client.deals):
+                                            print("----------------------------------------------")
+                                            print("Перезаход")
+                                            try:
+                                                self.order = self.client.create_order(
+                                                    symbol=symb, side=deal["side"], 
+                                                    qty=deal["deal_price"], 
+                                                    order_type=self.strategy.strategy_dict["order_type"], 
+                                                    stop_loss=deal["stop_loss"], 
+                                                    # trailing_stop= deal["trailing_stop"], 
+                                                    # trail_act_price=deal["trail_act_price"], 
+                                                    take_profit=deal["take_profit"])
+                                                while not self.client.private_mail:
+                                                    time.sleep(0.1)
+                                                self.client.sort_private_mail()
+                                                if symb in list(self.client.deals):
+                                                    self.new_deals[symb]=deal
+                                                    print("перезашли")
+                                                difference = float(self.client.deals[symb]["entryPrice"]) - float(deal["identification_price"])
+                                                if difference != 0:
+                                                    stop_loss = str(float(deal["stop_loss"])+difference)
+                                                    take_profit = str(float(deal["take_profit"])+difference)
+                                                    try:
+                                                        self.client.set_tpsl(symbol=symb, tp=take_profit, sl=stop_loss)#, trail_act_price=trail_act_price, trailing_stop=trailing_stop)
+                                                        print("передвинули tpsl")
+                                                    except:
+                                                        print("не получилось передвинуть tpsl")
+                                            except:
+                                                print("не получилось перезайти. сделка отменена")
+                                    except:
+                                        self.client.sort_private_mail()
+                                        if symb in list(self.client.deals):
+                                            print("не удалось отменить сделку")
+                                        else:
+                                            print("сделка завершилась сама")
+                                        
+                        elif symb not in list(self.client.deals) and len(list(self.client.deals)) < 5:
                             print("----------------------------------------------")
                             print("deal")
                             self.new_deals[symb]=deal
-                            self.order = self.client.create_order(
-                                symbol=symb, side=deal["side"], 
-                                qty=deal["deal_price"], 
-                                order_type=self.strategy.strategy_dict["order_type"], 
-                                stop_loss=deal["stop_loss"], 
-                                # trailing_stop= deal["trailing_stop"], 
-                                # trail_act_price=deal["trail_act_price"], 
-                                take_profit=deal["take_profit"])
-                
-                        while not self.client.private_mail:
-                                time.sleep(0.1)
-                        self.client.sort_private_mail()
-                        difference = float(self.client.deals[symb]["entryPrice"]) - float(deal["identification_price"])
-                        if difference != 0:
-                            stop_loss = str(float(deal["stop_loss"])+difference)
-                            take_profit = str(float(deal["take_profit"])+difference)
-                            self.client.set_tpsl(symbol=symb, tp=take_profit, sl=stop_loss)#, trail_act_price=trail_act_price, trailing_stop=trailing_stop)
+                            try:
+                                self.order = self.client.create_order(
+                                    symbol=symb, side=deal["side"], 
+                                    qty=deal["deal_price"], 
+                                    order_type=self.strategy.strategy_dict["order_type"], 
+                                    stop_loss=deal["stop_loss"], 
+                                    # trailing_stop= deal["trailing_stop"], 
+                                    # trail_act_price=deal["trail_act_price"], 
+                                    take_profit=deal["take_profit"])
+                    
+                                while not self.client.private_mail:
+                                        time.sleep(0.1)
+                                self.client.sort_private_mail()
+                                if symb in list(self.client.deals):
+                                    self.new_deals[symb]=deal
+                                    print("позиция открыта")
+                            
+                                difference = float(self.client.deals[symb]["entryPrice"]) - float(deal["identification_price"])
+                                if difference != 0:
+                                    stop_loss = str(float(deal["stop_loss"])+difference)
+                                    take_profit = str(float(deal["take_profit"])+difference)
+                                    try:
+                                        self.client.set_tpsl(symbol=symb, tp=take_profit, sl=stop_loss)#, trail_act_price=trail_act_price, trailing_stop=trailing_stop)
+                                        print("Передвинули tpsl")
+                                    except:
+                                        print("не удалось передвинуть tpls")
+                            except:
+                                print("не удалось открыть позицию")
                     
                     self.client.sort_private_mail()
                     if self.client.deal_news:

@@ -67,7 +67,7 @@ class Bot():
             w = wn("", main_label="API не работает, а значит вы не сможете торговать как реальными, так и демо средствами, " + 
                    "но прочие функции должны работать. Можете с ними ознакомиться", exit="ok", interrupt=True)
 
-        symbols = self.bb_client.get_symbol_list()[:110]
+        symbols = self.bb_client.get_symbol_list()[:]
         intervals = api.API.intervals[:3]
         print(dt.datetime.now())
         w = wn(main_label="loading....", interrupt=True, progress_bar=True, func=self.bb_client.a_get_data, symbols=symbols, intervals=intervals, open_interest=True)
