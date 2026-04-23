@@ -110,16 +110,16 @@ class Window():
             self.window.wait_window()
         else:
             # диагностика
-            # print(f"Ширина экрана: {self.window.winfo_screenwidth()}")
-            # print(f"Высота экрана: {self.window.winfo_screenheight()}")
-            # print(f"Масштаб Tk: {self.window.tk.call('tk', 'scaling')}")
-            # try:
-            #     from ctypes import windll
-            #     dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
-            #     print(f"DPI окна: {dpi}")
-            # except:
-            #     print("DPI: недоступно (не Windows или старая версия)")
-            # print(f"Геометрия окна: {self.window.geometry()}")
+            print(f"Ширина экрана: {self.window.winfo_screenwidth()}")
+            print(f"Высота экрана: {self.window.winfo_screenheight()}")
+            print(f"Масштаб Tk: {self.window.tk.call('tk', 'scaling')}")
+            try:
+                from ctypes import windll
+                dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
+                print(f"DPI окна: {dpi}")
+            except:
+                print("DPI: недоступно (не Windows или старая версия)")
+            print(f"Геометрия окна: {self.window.geometry()}")
             self.window.mainloop()
 
 
