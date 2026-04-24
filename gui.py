@@ -91,9 +91,9 @@ class GUI():
         self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
         for i in range(GUI.grid_rows):
-            self.window.rowconfigure(i, weight=1, minsize=40)
+            self.window.rowconfigure(i, weight=1, minsize=int(self.app_height/GUI.grid_rows))
         for i in range(GUI.grid_cols):
-            self.window.columnconfigure(i, weight=1)
+            self.window.columnconfigure(i, weight=1, minsize=int(self.app_width/GUI.grid_cols))
 
         if self.indicators:
             self.add_winds = len([x for x in [self.indicators[x]["chart"] for x in list(self.indicators)] if x == "add"])
