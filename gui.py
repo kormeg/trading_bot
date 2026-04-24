@@ -80,16 +80,21 @@ class GUI():
         
         dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
         self.dpi_coef = int(dpi/96)
+        print(self.dpi_coef)
         self.sf =("TkMenuFont", 8 * self.dpi_coef)
         self.mf = 12 * self.dpi_coef
         self.lf = 20 * self.dpi_coef
         screen_width = self.window.winfo_screenwidth()
+        print(screen_width)
         screen_height = self.window.winfo_screenheight()
+        print(screen_height)
         self.app_width = int(screen_width*self.dpi_coef/4*3)
         self.app_height = int(screen_height*self.dpi_coef/3*2)
+        print(self.app_width, self.app_height)
 
         x = int((screen_width*self.dpi_coef/2) - self.app_width/2)
         y = int((screen_height*self.dpi_coef/2) - self.app_height/2)
+        print(x, y)
         self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
         for i in range(GUI.grid_rows):
