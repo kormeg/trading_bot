@@ -78,9 +78,6 @@ class GUI():
 
         self.window.title(GUI.app_name)
 
-        # self.sf =("TkMenuFont", 8)
-        # self.mf = 12
-        # self.lf = 20 
         screen_width = self.window.winfo_screenwidth()
         screen_height = self.window.winfo_screenheight()
         self.app_width = int(screen_width*0.8)
@@ -90,10 +87,17 @@ class GUI():
         y = int((screen_height/2) - self.app_height/2)
         self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
-        for i in range(GUI.grid_rows):
-            self.window.rowconfigure(i, weight=1, minsize=int(self.app_height/GUI.grid_rows))
+        self.sf =("TkMenuFont", int(self.app_height/90))
+        self.mf = ("TkMenuFont", int(self.app_height/70))
+        self.lf = ("TkMenuFont", int(self.app_height/50))
+        print(self.sf, self.mf, self.lf)
+        
+        for i in range(2):
+            self.window.rowconfigure(i, weight=1, minsize=int(self.app_height/GUI.grid_rows/2))
+        for i in range(2,GUI.grid_rows):
+            self.window.rowconfigure(i, weight=1)
         for i in range(GUI.grid_cols):
-            self.window.columnconfigure(i, weight=1, minsize=int(self.app_width/GUI.grid_cols))
+            self.window.columnconfigure(i, weight=1)
 
         if self.indicators:
             self.add_winds = len([x for x in [self.indicators[x]["chart"] for x in list(self.indicators)] if x == "add"])
@@ -214,18 +218,18 @@ class GUI():
 
             self.balance = self.client.balance["USDT"]
             self.money_info = tk.Label(self.window, text=f"Баланс:  {self.balance}", wraplength=self.app_width/6.5, 
-                                       background="blue", anchor="w", font=40)
+                                       background="blue", anchor="w", font=self.lf)
             self.money_info.grid(row = 11, column=0, sticky="nsew")
             self.widgets.append(self.money_info)
             if self.trading:
                 text = "Стоп"
             else:
                 text="Торговать"
-            self.start_stop_button = tk.Button(self.window, text=text, font=28, command=self.trade_on_off)
+            self.start_stop_button = tk.Button(self.window, text=text, font=self.lf, command=self.trade_on_off)
             self.start_stop_button.grid(row=0, column=8, rowspan=2, sticky="nsew")
             self.widgets.append(self.start_stop_button)
 
-            self.history_label = tk.Label(self.window, text = "История сделок", font=20)
+            self.history_label = tk.Label(self.window, text = "История сделок", font=self.mf)
             self.history_label.grid(row=1, column=10, columnspan=2, sticky="nsew")
             self.widgets.append(self.history_label)
 
@@ -237,12 +241,12 @@ class GUI():
             self.volty_button.grid(row=0, column=7, rowspan=2, sticky="nsew")
             self.widgets.append(self.volty_button)
 
-        self.status_label = tk.Label(self.window, text=f"Текущая стратегия:    ={self.strategy.name}=,     Бот в режиме:    ={self.mode}=", font=20)
+        self.status_label = tk.Label(self.window, text=f"Текущая стратегия:    ={self.strategy.name}=,     Бот в режиме:    ={self.mode}=", font=self.mf)
         self.status_label.grid(row=0, column=0, columnspan=4, rowspan=1, sticky="nsw")#.pack(side="left", anchor="nw")
         if self.trading:
-            self.trading_status_label = tk.Label(self.window, text="Бот Торгует", foreground = "red", background="black", font=28)
+            self.trading_status_label = tk.Label(self.window, text="Бот Торгует", foreground = "red", background="black", font=self.lf)
         else:
-            self.trading_status_label = tk.Label(self.window, text="Бот Не Торгует", foreground = "black", background="blue", font=28)
+            self.trading_status_label = tk.Label(self.window, text="Бот Не Торгует", foreground = "black", background="blue", font=self.lf)
         self.trading_status_label.grid(row=0, column=9, columnspan=1, rowspan=2, sticky="nsew", padx=5)#.pack(side="right", anchor="ne")
         self.widgets.append(self.status_label)
         self.widgets.append(self.trading_status_label)

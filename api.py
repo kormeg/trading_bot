@@ -26,10 +26,10 @@ class API():
         self.deal_news = False
         self.balance_news = False
         self.demo=demo
+        self.api_connect = False
 
 
         self.api_connection(api_key, secret_key, demo)
-
         self.get_deals()
         pprint(self.deals)
         self.get_data_dict()
@@ -52,6 +52,7 @@ class API():
                     max_retries=200,
                     retry_delay=3,
                     demo=demo,
+                    timeout=30
                     # recv_window=60000
                 )
             except:
@@ -559,6 +560,8 @@ class API():
         self.balance["all USD actives"] =  self.all_usd_actives
         
         print(self.balance)
+
+
 
     def get_one(self, symbol, interval):
         return self.data[symbol][interval]["data"]
