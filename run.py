@@ -43,22 +43,23 @@ for module, version in required_modules.items():
             sys.exit(1)
 print("Все пакеты готовы к использованию!")
 
+# запрещаем винде менять dpi
 try:
-    # Метод 1: современный (Windows 10 1607+)
-    windll.user32.SetProcessDpiAwarenessContext(0)  # DPI_AWARENESS_CONTEXT_UNAWARE
+    # Метод 1: Windows 10 1607+
+    windll.user32.SetProcessDpiAwarenessContext(0)  
     print("SetProcessDpiAwarenessContext(0) succeeded")
 except AttributeError:
     print("SetProcessDpiAwarenessContext not available")
 
 try:
-    # Метод 2: старый (Windows 8.1+)
-    windll.shcore.SetProcessDpiAwareness(0)  # PROCESS_DPI_UNAWARE
+    # Метод 2: Windows 8.1+
+    windll.shcore.SetProcessDpiAwareness(0)  
     print("SetProcessDpiAwareness(0) succeeded")
 except AttributeError:
     print("SetProcessDpiAwareness not available")
 
 try:
-    # Метод 3: самый старый (Windows Vista+)
+    # Метод 3: Windows Vista+
     windll.user32.SetProcessDPIAware()
     print("SetProcessDPIAware succeeded")
 except AttributeError:

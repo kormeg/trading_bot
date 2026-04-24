@@ -77,26 +77,17 @@ class GUI():
         self.window = tk.Tk()
 
         self.window.title(GUI.app_name)
-        
-        dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
-        # windll.user32.SetProcessDpiAwarenessContext(0)
-        print(dpi)
-        self.dpi_coef = int(dpi/96)
-        print(self.dpi_coef)
-        self.sf =("TkMenuFont", 8 * self.dpi_coef)
-        self.mf = 12 * self.dpi_coef
-        self.lf = 20 * self.dpi_coef
-        screen_width = self.window.winfo_screenwidth()
-        print(screen_width)
-        screen_height = self.window.winfo_screenheight()
-        print(screen_height)
-        self.app_width = int(screen_width*self.dpi_coef/4*3)
-        self.app_height = int(screen_height*self.dpi_coef/3*2)
-        print(self.app_width, self.app_height)
 
-        x = int((screen_width*self.dpi_coef/2) - self.app_width/2)
-        y = int((screen_height*self.dpi_coef/2) - self.app_height/2)
-        print(x, y)
+        # self.sf =("TkMenuFont", 8)
+        # self.mf = 12
+        # self.lf = 20 
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+        self.app_width = int(screen_width*0.8)
+        self.app_height = int(screen_height*0.7)
+
+        x = int((screen_width/2) - self.app_width/2)
+        y = int((screen_height/2) - self.app_height/2)
         self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
         for i in range(GUI.grid_rows):
@@ -116,17 +107,17 @@ class GUI():
         self.make_widgets()
         self.live_chart(vn.Visualization(params={"add_windows" : self.add_winds}))
 
-        # диагностика
-        print(f"Ширина экрана: {self.window.winfo_screenwidth()}")
-        print(f"Высота экрана: {self.window.winfo_screenheight()}")
-        print(f"Масштаб Tk: {self.window.tk.call('tk', 'scaling')}")
-        try:
+        # # диагностика
+        # print(f"Ширина экрана: {self.window.winfo_screenwidth()}")
+        # print(f"Высота экрана: {self.window.winfo_screenheight()}")
+        # print(f"Масштаб Tk: {self.window.tk.call('tk', 'scaling')}")
+        # try:
             
-            dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
-            print(f"DPI окна: {dpi}")
-        except:
-            print("DPI: недоступно (не Windows или старая версия)")
-        print(f"Геометрия окна: {self.window.geometry()}")
+        #     dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
+        #     print(f"DPI окна: {dpi}")
+        # except:
+        #     print("DPI: недоступно (не Windows или старая версия)")
+        # print(f"Геометрия окна: {self.window.geometry()}")
 
 
 
@@ -188,16 +179,16 @@ class GUI():
                 for i in range(len(self.volatility)):
                     j = self.volatility["symbol_natr"][i]
                     if self.volatility["symbol"][i] in self.strategy.strategy_dict["symbols"]:
-                        self.symbol_menu.add_command(label=j, foreground="white", background="black", font=self.sf, command=partial(self.set_symbol, j))
+                        self.symbol_menu.add_command(label=j, foreground="white", background="black", command=partial(self.set_symbol, j))
                     else:
                         if not self.mode=="trade":
-                            self.symbol_menu.add_command(label=j, font=self.sf, command=partial(self.set_symbol, j))
+                            self.symbol_menu.add_command(label=j, command=partial(self.set_symbol, j))
         else:
             for i in [x for x in self.strategy.strategy_dict["symbols"] if x in self.client.symbols]:
-                self.symbol_menu.add_command(label=i, foreground="white", background="black", font=self.sf, command=partial(self.set_symbol, i))
+                self.symbol_menu.add_command(label=i, foreground="white", background="black", command=partial(self.set_symbol, i))
             if not self.mode == "trade":
                 for i in [x for x in self.client.symbols if x not in self.strategy.strategy_dict["symbols"]]: 
-                    self.symbol_menu.add_command(label=i, font=self.sf, command=partial(self.set_symbol, i))
+                    self.symbol_menu.add_command(label=i, command=partial(self.set_symbol, i))
 
 
 
@@ -224,14 +215,14 @@ class GUI():
             self.balance = self.client.balance["USDT"]
             self.money_info = tk.Label(self.window, text=f"Баланс:  {self.balance}", wraplength=self.app_width/6.5, 
                                        background="blue", anchor="w", font=40)
-            self.money_info.grid(row = 9, column=0, sticky="nsew")
+            self.money_info.grid(row = 11, column=0, sticky="nsew")
             self.widgets.append(self.money_info)
             if self.trading:
                 text = "Стоп"
             else:
                 text="Торговать"
             self.start_stop_button = tk.Button(self.window, text=text, font=28, command=self.trade_on_off)
-            self.start_stop_button.grid(row=0, column=8, sticky="nsew")
+            self.start_stop_button.grid(row=0, column=8, rowspan=2, sticky="nsew")
             self.widgets.append(self.start_stop_button)
 
             self.history_label = tk.Label(self.window, text = "История сделок", font=20)
@@ -243,7 +234,7 @@ class GUI():
                 self.volty_button = tk.Button(self.window, text = "отобрать волатильные монеты", wraplength=self.app_width/12.5, command= self.vol_cut_on_off)
             else:
                 self.volty_button = tk.Button(self.window, text = "оставить текущие монеты", wraplength=self.app_width/12.5, command= self.vol_cut_on_off)
-            self.volty_button.grid(row=0, column=7, sticky="nsew")
+            self.volty_button.grid(row=0, column=7, rowspan=2, sticky="nsew")
             self.widgets.append(self.volty_button)
 
         self.status_label = tk.Label(self.window, text=f"Текущая стратегия:    ={self.strategy.name}=,     Бот в режиме:    ={self.mode}=", font=20)
@@ -252,7 +243,7 @@ class GUI():
             self.trading_status_label = tk.Label(self.window, text="Бот Торгует", foreground = "red", background="black", font=28)
         else:
             self.trading_status_label = tk.Label(self.window, text="Бот Не Торгует", foreground = "black", background="blue", font=28)
-        self.trading_status_label.grid(row=0, column=9, columnspan=1, rowspan=1, sticky="nsew", padx=5)#.pack(side="right", anchor="ne")
+        self.trading_status_label.grid(row=0, column=9, columnspan=1, rowspan=2, sticky="nsew", padx=5)#.pack(side="right", anchor="ne")
         self.widgets.append(self.status_label)
         self.widgets.append(self.trading_status_label)
         
