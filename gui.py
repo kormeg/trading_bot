@@ -91,7 +91,7 @@ class GUI():
         self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
         for i in range(GUI.grid_rows):
-            self.window.rowconfigure(i, weight=1)
+            self.window.rowconfigure(i, weight=1, minsize=40)
         for i in range(GUI.grid_cols):
             self.window.columnconfigure(i, weight=1)
 
