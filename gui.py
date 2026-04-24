@@ -79,6 +79,8 @@ class GUI():
         self.window.title(GUI.app_name)
         
         dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
+        windll.user32.SetProcessDpiAwarenessContext(0)
+        print(dpi)
         self.dpi_coef = int(dpi/96)
         print(self.dpi_coef)
         self.sf =("TkMenuFont", 8 * self.dpi_coef)
