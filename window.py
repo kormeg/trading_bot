@@ -29,7 +29,7 @@ class Window():
             **kwargs):
         if root:
             self.window = tk.Toplevel(root)
-            self.window.tk.call('tk', 'scaling', 1.0)
+            # self.window.tk.call('tk', 'scaling', 1.0)
         else:
             self.window = tk.Tk()
         self.window.title(name)

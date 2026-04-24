@@ -75,19 +75,21 @@ class GUI():
             self.indicators = {k:v for k, v in self.indicators.items() if k in list(st.Strategy.indicators)}
 
         self.window = tk.Tk()
-        dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
-        self.window.tk.call('tk', 'scaling', dpi / 72)
-        self.window.update_idletasks()  # Пересчёт размеров и позиций
-        self.window.update() 
+
         self.window.title(GUI.app_name)
         
+        dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
+        self.dpi_coef = int(dpi/96)
+        self.sf =("TkMenuFont", 8 * self.dpi_coef)
+        self.mf = 12 * self.dpi_coef
+        self.lf = 20 * self.dpi_coef
         screen_width = self.window.winfo_screenwidth()
         screen_height = self.window.winfo_screenheight()
-        self.app_width = int(screen_width/4*3)
-        self.app_height = int(screen_height/3*2)
+        self.app_width = int(screen_width*self.dpi_coef/4*3)
+        self.app_height = int(screen_height*self.dpi_coef/3*2)
 
-        x = int((screen_width/2) - self.app_width/2)
-        y = int((screen_height/2) - self.app_height/2)
+        x = int((screen_width*self.dpi_coef/2) - self.app_width/2)
+        y = int((screen_height*self.dpi_coef/2) - self.app_height/2)
         self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
         for i in range(GUI.grid_rows):
@@ -179,16 +181,16 @@ class GUI():
                 for i in range(len(self.volatility)):
                     j = self.volatility["symbol_natr"][i]
                     if self.volatility["symbol"][i] in self.strategy.strategy_dict["symbols"]:
-                        self.symbol_menu.add_command(label=j, foreground="white", background="black", command=partial(self.set_symbol, j))
+                        self.symbol_menu.add_command(label=j, foreground="white", background="black", font=self.sf, command=partial(self.set_symbol, j))
                     else:
                         if not self.mode=="trade":
-                            self.symbol_menu.add_command(label=j, command=partial(self.set_symbol, j))
+                            self.symbol_menu.add_command(label=j, font=self.sf, command=partial(self.set_symbol, j))
         else:
             for i in [x for x in self.strategy.strategy_dict["symbols"] if x in self.client.symbols]:
-                self.symbol_menu.add_command(label=i, foreground="white", background="black", command=partial(self.set_symbol, i))
+                self.symbol_menu.add_command(label=i, foreground="white", background="black", font=self.sf, command=partial(self.set_symbol, i))
             if not self.mode == "trade":
                 for i in [x for x in self.client.symbols if x not in self.strategy.strategy_dict["symbols"]]: 
-                    self.symbol_menu.add_command(label=i, command=partial(self.set_symbol, i))
+                    self.symbol_menu.add_command(label=i, font=self.sf, command=partial(self.set_symbol, i))
 
 
 
