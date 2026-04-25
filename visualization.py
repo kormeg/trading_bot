@@ -459,7 +459,7 @@ class Visualization:
                             s=params["titles"][i], 
                             ha='left', 
                             color=params["colors"][i], 
-                            fontsize=12)
+                            fontsize=11)
                 
 
 
