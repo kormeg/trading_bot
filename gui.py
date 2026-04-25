@@ -75,6 +75,25 @@ class GUI():
             self.indicators = {k:v for k, v in self.indicators.items() if k in list(st.Strategy.indicators)}
 
         self.window = tk.Tk()
+
+        try:
+            windll.shcore.SetProcessDpiAwareness(1) # 1 = DPI_AWARENESS_CONTEXT_SYSTEM_AWARE
+        except AttributeError:
+            pass # Не Windows или версия Python старая
+
+        # Получаем DPI экрана (для Windows)
+        try:
+            dpi = windll.user32.GetDpiForWindow(self.window.winfo_id())
+        except AttributeError:
+            dpi = 96 # Значение по умолчанию, если функция недоступна
+
+        # Устанавливаем масштаб. Формула: новое_масштабирование = dpi_экрана / 72
+        # 72 — это стандартное DPI, от которого отталкивается Tkinter.
+        scaling_factor = dpi / 72
+        self.window.tk.call('tk', 'scaling', scaling_factor)
+
+
+
         self.window.title(GUI.app_name)
         screen_width = self.window.winfo_screenwidth()
         screen_height = self.window.winfo_screenheight()
@@ -82,7 +101,7 @@ class GUI():
         self.app_height = int(screen_height*0.7)
         x = int((screen_width/2) - self.app_width/2)
         y = int((screen_height/2) - self.app_height/2)
-        self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
+        self.window.geometry(f"{int(self.app_width * scaling_factor)}x{int(self.app_height * scaling_factor)}+{x}+{y}")
 
         self.sf =("TkMenuFont", int(round(self.app_height/90)))
         self.mf = ("TkMenuFont", int(round(self.app_height/70)))
@@ -179,13 +198,13 @@ class GUI():
                 for i in range(len(self.volatility)):
                     j = self.volatility["symbol_natr"][i]
                     if self.volatility["symbol"][i] in self.strategy.strategy_dict["symbols"]:
-                        self.symbol_menu.add_command(label=j, foreground="white", background="black", font=self.mf, command=partial(self.set_symbol, j))
+                        self.symbol_menu.add_command(label=j, foreground="white", background="black", font=self.sf, command=partial(self.set_symbol, j))
                     else:
                         if not self.mode=="trade":
                             self.symbol_menu.add_command(label=j, font=self.sf, command=partial(self.set_symbol, j))
         else:
             for i in [x for x in self.strategy.strategy_dict["symbols"] if x in self.client.symbols]:
-                self.symbol_menu.add_command(label=i, foreground="white", background="black", font=self.mf, command=partial(self.set_symbol, i))
+                self.symbol_menu.add_command(label=i, foreground="white", background="black", font=self.sf, command=partial(self.set_symbol, i))
             if not self.mode == "trade":
                 for i in [x for x in self.client.symbols if x not in self.strategy.strategy_dict["symbols"]]: 
                     self.symbol_menu.add_command(label=i, font=self.sf, command=partial(self.set_symbol, i))
