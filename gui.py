@@ -89,23 +89,23 @@ class GUI():
 
         # Устанавливаем масштаб. Формула: новое_масштабирование = dpi_экрана / 72
         # 72 — это стандартное DPI, от которого отталкивается Tkinter.
-        scaling_factor = dpi / 72
+        scaling_factor = dpi / 96
         self.window.tk.call('tk', 'scaling', scaling_factor)
 
 
 
         self.window.title(GUI.app_name)
-        screen_width = int(self.window.winfo_screenwidth()/scaling_factor)
-        screen_height = int(self.window.winfo_screenheight()/scaling_factor)
-        self.app_width = int(screen_width*0.75)
-        self.app_height = int(screen_height*0.7)
+        screen_width = self.window.winfo_screenwidth()
+        screen_height = self.window.winfo_screenheight()
+        self.app_width = int(screen_width*0.75* scaling_factor)
+        self.app_height = int(screen_height*0.7* scaling_factor)
         x = int((screen_width/2) - self.app_width/2)
         y = int((screen_height/2) - self.app_height/2)
-        self.window.geometry(f"{int(self.app_width * scaling_factor)}x{int(self.app_height * scaling_factor)}+{x}+{y}")
+        self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
-        self.sf =("TkMenuFont", int(round(self.app_height/90)))
-        self.mf = ("TkMenuFont", int(round(self.app_height/70)))
-        self.lf = ("TkMenuFont", int(round(self.app_height/60)))
+        self.sf =("TkMenuFont", 8)# int(round(self.app_height/90)))
+        self.mf = ("TkMenuFont", 11)# int(round(self.app_height/70)))
+        self.lf = ("TkMenuFont", 13)# int(round(self.app_height/60)))
         print(self.sf, self.mf, self.lf)
         
         
