@@ -84,9 +84,9 @@ class GUI():
         y = int((screen_height/2) - self.app_height/2)
         self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
-        self.sf =("TkMenuFont", int(self.app_height/90))
-        self.mf = ("TkMenuFont", int(self.app_height/70))
-        self.lf = ("TkMenuFont", int(self.app_height/55))
+        self.sf =("TkMenuFont", int(round(self.app_height/90)))
+        self.mf = ("TkMenuFont", int(round(self.app_height/70)))
+        self.lf = ("TkMenuFont", int(round(self.app_height/60)))
         print(self.sf, self.mf, self.lf)
         
         
@@ -179,13 +179,13 @@ class GUI():
                 for i in range(len(self.volatility)):
                     j = self.volatility["symbol_natr"][i]
                     if self.volatility["symbol"][i] in self.strategy.strategy_dict["symbols"]:
-                        self.symbol_menu.add_command(label=j, foreground="white", background="black", font=self.sf, command=partial(self.set_symbol, j))
+                        self.symbol_menu.add_command(label=j, foreground="white", background="black", font=self.mf, command=partial(self.set_symbol, j))
                     else:
                         if not self.mode=="trade":
                             self.symbol_menu.add_command(label=j, font=self.sf, command=partial(self.set_symbol, j))
         else:
             for i in [x for x in self.strategy.strategy_dict["symbols"] if x in self.client.symbols]:
-                self.symbol_menu.add_command(label=i, foreground="white", background="black", font=self.sf, command=partial(self.set_symbol, i))
+                self.symbol_menu.add_command(label=i, foreground="white", background="black", font=self.mf, command=partial(self.set_symbol, i))
             if not self.mode == "trade":
                 for i in [x for x in self.client.symbols if x not in self.strategy.strategy_dict["symbols"]]: 
                     self.symbol_menu.add_command(label=i, font=self.sf, command=partial(self.set_symbol, i))
@@ -240,7 +240,7 @@ class GUI():
             self.widgets.append(self.volty_button)
 
         self.status_label = tk.Label(self.window, text=f"Текущая стратегия:    ={self.strategy.name}=,     Бот в режиме:    ={self.mode}=", font=self.mf)
-        self.status_label.grid(row=1, column=1, columnspan=8, rowspan=1, sticky="nsw")
+        self.status_label.grid(row=2, column=1, columnspan=8, rowspan=1, sticky="nsw")
         if self.trading:
             self.trading_status_label = tk.Label(self.window, text="Бот Торгует", foreground = "red", background="black", font=self.lf)
         else:
