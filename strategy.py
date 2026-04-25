@@ -110,7 +110,8 @@ class Strategy:
         strat_list = []
         try:
             for filename in os.listdir("../config/strategies"):
-                strat_list.append(filename.rstrip(".py"))
+                if ".py" in filename:
+                    strat_list.append(filename.rstrip(".py"))
         except:
             pass
         return strat_list

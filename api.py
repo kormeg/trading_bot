@@ -30,6 +30,7 @@ class API():
 
 
         self.api_connection(api_key, secret_key, demo)
+        print(self.client)
         self.get_deals()
         pprint(self.deals)
         self.get_data_dict()
@@ -37,80 +38,72 @@ class API():
 
         if websocket:
             self.public_ws_connection()
+            print(self.public_ws)
             self.private_ws_connection(api_key, secret_key)
+            print(self.private_ws)
 
             
 
 
     def api_connection(self, api_key, secret_key, demo):
-        while True:
-            try:
-                self.client = HTTP(
-                    api_key=api_key,
-                    api_secret=secret_key,
-                    testnet=False,
-                    max_retries=200,
-                    retry_delay=3,
-                    demo=demo,
-                    timeout=30
-                    # recv_window=60000
-                )
-            except:
-                time.sleep(1)
-            else:
-                break
+
+        self.client = HTTP(
+            api_key=api_key,
+            api_secret=secret_key,
+            testnet=False,
+            max_retries=200,
+            retry_delay=3,
+            demo=demo,
+            timeout=10,
+        )
     
 
 
     def public_ws_connection(self):
-        while True:
-            try:
-                self.public_ws = WebSocket(
-                        testnet=False,
-                        channel_type="linear",
-                        retries=200,
-                        restart_on_error=True,
+        try:
+            self.public_ws = WebSocket(
+                    testnet=False,
+                    channel_type="linear",
+                    retries=200,
+                    restart_on_error=True,
+                    ping_interval=30,
+                    ping_timeout=10, 
+                    private_auth_expire=2
+                )
+                
+            for symb in self.get_symbol_list():
+                self.public_ws.ticker_stream(
+                        symbol=symb,
+                        callback=self.handle_message
                     )
-                    
-                for symb in self.get_symbol_list():
-                    self.public_ws.ticker_stream(
-                            symbol=symb,
-                            callback=self.handle_message
-                        )
-                    for inter in API.intervals:
-                        self.public_ws.kline_stream(
-                            interval=inter,
-                            symbol=symb,
-                            callback=self.handle_message
-                            ) 
-            except:
-                print("public websocket не пашет")
-                time.sleep(1)
-            else:
-                break
+                for inter in API.intervals:
+                    self.public_ws.kline_stream(
+                        interval=inter,
+                        symbol=symb,
+                        callback=self.handle_message
+                        ) 
+        except Exception as e:
+            print(e)
 
 
 
     def private_ws_connection(self, api_key, secret_key):
-        while True:
-            try:
-                self.private_ws = WebSocket(
-                        testnet=False,
-                        channel_type="private",
-                        api_key=api_key,
-                        api_secret=secret_key,
-                        retries=200,
-                        restart_on_error=True
-                    )
-                self.private_ws.position_stream(callback=self.private_handle)
-                # self.private_ws.order_stream(callback=self.private_handle)
-                self.private_ws.wallet_stream(callback=self.private_handle)
-                # self.private_ws.execution_stream(callback=self.private_handle)
-            except:
-                print("private websocket не пашет")
-                time.sleep(1)
-            else:
-                break
+        try:
+            self.private_ws = WebSocket(
+                    testnet=False,
+                    channel_type="private",
+                    api_key=api_key,
+                    api_secret=secret_key,
+                    retries=200,
+                    restart_on_error=True,
+                    ping_interval=30,  
+                    ping_timeout=10,
+                    private_auth_expire=2
+                )
+            self.private_ws.position_stream(callback=self.private_handle)
+            self.private_ws.wallet_stream(callback=self.private_handle)
+        except Exception as e:
+            print(e)
 
 
 
@@ -124,22 +117,9 @@ class API():
                 return False
             if not ws.ws.sock.connected:
                 return False
-            # if ws.ws.sock.status != 101:  
-            #     return False
             return True
         except Exception:
             return False
-        
-    
-    # def is_http_connect(self, client):
-    #     try:
-    #         response = client.get_server_time()
-    #         # Проверяем, что ответ содержит поле time_now
-    #         if 'result' in response and 'time_now' in response['result']:
-    #             return True
-    #         return False
-    #     except Exception:
-    #         return False
 
 
 
@@ -539,13 +519,13 @@ class API():
             return False
         
     def get_symbol_list(self):
-        while True:
-            try:
-                r = self.client.get_instruments_info(category="linear", limit=1000)["result"]["list"]
-                l = [x["symbol"] for x in r if re.findall(r'\w+USDT$', x["symbol"])]
-                return l
-            except:
-                time.sleep(1)
+        # while True:
+        #     try:
+        r = self.client.get_instruments_info(category="linear", limit=1000)["result"]["list"]
+        l = [x["symbol"] for x in r if re.findall(r'\w+USDT$', x["symbol"])]
+        return l
+            # except:
+            #     time.sleep(1)
 
     def check_balance(self):
         balance_mess = self.client.get_wallet_balance(accountType="UNIFIED")
@@ -570,28 +550,28 @@ class API():
 
     def get_deals(self, symbol=False):
         if symbol:
-            while True:
-                try:
-                    position = self.client.get_positions(category="linear", symbol=symbol)
-                    position = {k:v for k,v in position["result"]["list"][0].items() if k in API.position_items+["avgPrice"]}
-                    position["entryPrice"] = position["avgPrice"]
-                    print(position)
-                    return position
-                except:
-                    time.sleep(1)
+            # while True:
+            #     try:
+            position = self.client.get_positions(category="linear", symbol=symbol)
+            position = {k:v for k,v in position["result"]["list"][0].items() if k in API.position_items+["avgPrice"]}
+            position["entryPrice"] = position["avgPrice"]
+            print(position)
+            return position
+                # except:
+                #     time.sleep(1)
                     
 
         else:
-            while True:
-                try:
-                    positions = self.client.get_positions(category="linear", settleCoin="USDT")
-                    for i in positions["result"]["list"]:
-                        self.deals[i["symbol"]] = {k:v for k,v in i.items() if k in API.position_items+["avgPrice"]}
-                        self.deals[i["symbol"]]["entryPrice"] = self.deals[i["symbol"]]["avgPrice"]
-                except:
-                    time.sleep(1)
-                else:
-                    break
+            # while True:
+            #     try:
+            positions = self.client.get_positions(category="linear", settleCoin="USDT")
+            for i in positions["result"]["list"]:
+                self.deals[i["symbol"]] = {k:v for k,v in i.items() if k in API.position_items+["avgPrice"]}
+                self.deals[i["symbol"]]["entryPrice"] = self.deals[i["symbol"]]["avgPrice"]
+                # except:
+                #     time.sleep(1)
+                # else:
+                #     break
 
 
 

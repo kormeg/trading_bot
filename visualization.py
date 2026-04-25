@@ -40,7 +40,7 @@ class Visualization:
         
         # self.xlim = self.main_ax.get_xlim() # пределы оси X для относительных рассчетов, ибо datetime не подходит
 
-        # self.fig.set_dpi(120)
+        # self.fig.set_dpi(96)
         self.fig.set_facecolor(self.win_color)
         plt.subplots_adjust(left=0.04, right=0.92, bottom=0.06, top=0.94)
         plt.xticks(rotation=0, ha='center')

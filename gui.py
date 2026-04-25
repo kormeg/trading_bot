@@ -22,8 +22,8 @@ class GUI():
     # app_width = 1600
     # app_height = 800
     chart_length = 200
-    grid_rows = 12
-    grid_cols = 12
+    grid_rows = 24
+    grid_cols = 20
     modes = ["view", "trade", "edit"]
     history_items = {"identification_time": "Время", 
                     "symbol": "Монета", 
@@ -75,29 +75,26 @@ class GUI():
             self.indicators = {k:v for k, v in self.indicators.items() if k in list(st.Strategy.indicators)}
 
         self.window = tk.Tk()
-
         self.window.title(GUI.app_name)
-
         screen_width = self.window.winfo_screenwidth()
         screen_height = self.window.winfo_screenheight()
-        self.app_width = int(screen_width*0.8)
+        self.app_width = int(screen_width*0.75)
         self.app_height = int(screen_height*0.7)
-
         x = int((screen_width/2) - self.app_width/2)
         y = int((screen_height/2) - self.app_height/2)
         self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
         self.sf =("TkMenuFont", int(self.app_height/90))
         self.mf = ("TkMenuFont", int(self.app_height/70))
-        self.lf = ("TkMenuFont", int(self.app_height/50))
+        self.lf = ("TkMenuFont", int(self.app_height/55))
         print(self.sf, self.mf, self.lf)
         
-        for i in range(2):
-            self.window.rowconfigure(i, weight=1, minsize=int(self.app_height/GUI.grid_rows/2))
-        for i in range(2,GUI.grid_rows):
-            self.window.rowconfigure(i, weight=1)
+        # for i in range(2):
+        #     self.window.rowconfigure(i, weight=1, minsize=int(self.app_height/GUI.grid_rows))
+        for i in range(GUI.grid_rows):
+            self.window.rowconfigure(i+1, weight=1, minsize=int(self.app_height/GUI.grid_rows))
         for i in range(GUI.grid_cols):
-            self.window.columnconfigure(i, weight=1)
+            self.window.columnconfigure(i+1, weight=1, minsize=int(self.app_width/GUI.grid_cols))
 
         if self.indicators:
             self.add_winds = len([x for x in [self.indicators[x]["chart"] for x in list(self.indicators)] if x == "add"])
@@ -159,19 +156,19 @@ class GUI():
 
         if timeframe:
             for i in self.client.intervals:
-                self.timeframe_menu.add_command(label=i, command=partial(self.set_timeframe, i))
+                self.timeframe_menu.add_command(label=i, font=self.sf, command=partial(self.set_timeframe, i))
 
         if strategy:
             for i in st.Strategy.get_strat_list():
-                self.strategy_menu.add_command(label=i, command=partial(self.set_strategy, i))
+                self.strategy_menu.add_command(label=i, font=self.sf, command=partial(self.set_strategy, i))
 
         if indicator:
             for i in list(st.Strategy.indicators):
-                self.indicator_menu.add_command(label=i, command=partial(self.set_indicator, i))
+                self.indicator_menu.add_command(label=i, font=self.sf, command=partial(self.set_indicator, i))
         
         if mode:
             for i in GUI.modes:
-                self.mode_menu.add_command(label=i,command=partial(self.set_mode, i))
+                self.mode_menu.add_command(label=i, font=self.sf, command=partial(self.set_mode, i))
 
     
     
@@ -183,16 +180,16 @@ class GUI():
                 for i in range(len(self.volatility)):
                     j = self.volatility["symbol_natr"][i]
                     if self.volatility["symbol"][i] in self.strategy.strategy_dict["symbols"]:
-                        self.symbol_menu.add_command(label=j, foreground="white", background="black", command=partial(self.set_symbol, j))
+                        self.symbol_menu.add_command(label=j, foreground="white", background="black", font=self.sf, command=partial(self.set_symbol, j))
                     else:
                         if not self.mode=="trade":
-                            self.symbol_menu.add_command(label=j, command=partial(self.set_symbol, j))
+                            self.symbol_menu.add_command(label=j, font=self.sf, command=partial(self.set_symbol, j))
         else:
             for i in [x for x in self.strategy.strategy_dict["symbols"] if x in self.client.symbols]:
-                self.symbol_menu.add_command(label=i, foreground="white", background="black", command=partial(self.set_symbol, i))
+                self.symbol_menu.add_command(label=i, foreground="white", background="black", font=self.sf, command=partial(self.set_symbol, i))
             if not self.mode == "trade":
                 for i in [x for x in self.client.symbols if x not in self.strategy.strategy_dict["symbols"]]: 
-                    self.symbol_menu.add_command(label=i, command=partial(self.set_symbol, i))
+                    self.symbol_menu.add_command(label=i, font=self.sf, command=partial(self.set_symbol, i))
 
 
 
@@ -202,8 +199,8 @@ class GUI():
             for widget in self.widgets:
                 widget.destroy()
         if self.mode == "trade":
-            self.output_window = tk.Text(self.window, bd=3, width=30)
-            self.output_window.grid(row=2, column=10, columnspan=2, rowspan=10, sticky="nsew")
+            self.output_window = tk.Text(self.window, bd=3, width=31, font=self.lf)
+            self.output_window.grid(row=3, column=17, columnspan=4, rowspan=20, sticky="nsew")
             self.widgets.append(self.output_window)
             if self.history:
                 text = ""
@@ -212,42 +209,44 @@ class GUI():
                         print_dict = {v:self.history[i][k] if k in list(self.history[i]) else "не зафиксировано" for k, v in self.history_items.items()}
                     else:
                         print_dict = self.history[i]
-                    text+="\n\n------------------------------\n"+"\n".join([k+" : "+ v for k, v in print_dict.items()])
+                             
+                    text+="\n------------------------------------------\n"+"\n".join([k+" : "+ v for k, v in print_dict.items()])+"\n------------------------------------------\n"
                 self.output_window.insert(index=tk.END, chars=text)
                 self.output_window.see("end")
 
             self.balance = self.client.balance["USDT"]
             self.money_info = tk.Label(self.window, text=f"Баланс:  {self.balance}", wraplength=self.app_width/6.5, 
-                                       background="blue", anchor="w", font=self.lf)
-            self.money_info.grid(row = 11, column=0, sticky="nsew")
+                                       background="blue", anchor="c", font=self.lf)
+            self.money_info.grid(row = 23, rowspan=2, column=17, columnspan=4, sticky="nsew")
             self.widgets.append(self.money_info)
+
+            self.history_label = tk.Label(self.window, text = "История сделок", font=self.lf, anchor="c")
+            self.history_label.grid(row=2, column=17, columnspan=4, sticky="nsew")
+            self.widgets.append(self.history_label)
+
             if self.trading:
                 text = "Стоп"
             else:
                 text="Торговать"
             self.start_stop_button = tk.Button(self.window, text=text, font=self.lf, command=self.trade_on_off)
-            self.start_stop_button.grid(row=0, column=8, rowspan=2, sticky="nsew")
+            self.start_stop_button.grid(row=1, column=13, columnspan=2, rowspan=2, sticky="nsew")
             self.widgets.append(self.start_stop_button)
-
-            self.history_label = tk.Label(self.window, text = "История сделок", font=self.mf)
-            self.history_label.grid(row=1, column=10, columnspan=2, sticky="nsew")
-            self.widgets.append(self.history_label)
 
         # elif self.mode == "edit":
             if not self.vol_cut:
-                self.volty_button = tk.Button(self.window, text = "отобрать волатильные монеты", wraplength=self.app_width/12.5, command= self.vol_cut_on_off)
+                self.volty_button = tk.Button(self.window, text = "отобрать волатильные монеты", wraplength=self.app_width/12.5, font=self.sf, command= self.vol_cut_on_off)
             else:
-                self.volty_button = tk.Button(self.window, text = "оставить текущие монеты", wraplength=self.app_width/12.5, command= self.vol_cut_on_off)
-            self.volty_button.grid(row=0, column=7, rowspan=2, sticky="nsew")
+                self.volty_button = tk.Button(self.window, text = "оставить текущие монеты", wraplength=self.app_width/12.5, font=self.sf, command= self.vol_cut_on_off)
+            self.volty_button.grid(row=1, column=11, columnspan=2, rowspan=2, sticky="nsew")
             self.widgets.append(self.volty_button)
 
         self.status_label = tk.Label(self.window, text=f"Текущая стратегия:    ={self.strategy.name}=,     Бот в режиме:    ={self.mode}=", font=self.mf)
-        self.status_label.grid(row=0, column=0, columnspan=4, rowspan=1, sticky="nsw")#.pack(side="left", anchor="nw")
+        self.status_label.grid(row=1, column=1, columnspan=8, rowspan=1, sticky="nsw")
         if self.trading:
             self.trading_status_label = tk.Label(self.window, text="Бот Торгует", foreground = "red", background="black", font=self.lf)
         else:
             self.trading_status_label = tk.Label(self.window, text="Бот Не Торгует", foreground = "black", background="blue", font=self.lf)
-        self.trading_status_label.grid(row=0, column=9, columnspan=1, rowspan=2, sticky="nsew", padx=5)#.pack(side="right", anchor="ne")
+        self.trading_status_label.grid(row=1, column=15, columnspan=2, rowspan=2, sticky="nsew", padx=5)
         self.widgets.append(self.status_label)
         self.widgets.append(self.trading_status_label)
         
@@ -292,9 +291,11 @@ class GUI():
                     self.chart.add_plot(**(self.strategy.indicators[i]|self.strategy.indi_dict[i]))
 
             self.chart.visualize()
-
             self.canvas = bt.FigureCanvasTkAgg(self.chart.fig, self.window)
-            self.canvas.get_tk_widget().grid(row=2, column=0, columnspan=10, rowspan=6, sticky="nsew")
+            if self.mode == "trade":
+                self.canvas.get_tk_widget().grid(row=3, column=1, columnspan=16, rowspan=22, sticky="nsew")
+            else:
+                self.canvas.get_tk_widget().grid(row=3, column=1, columnspan=20, rowspan=22, sticky="nsew")
             self.update_chart()
 
 
@@ -387,6 +388,9 @@ class GUI():
 
     def set_mode(self, mode):
         self.mode = mode
+        self.canvas.get_tk_widget().destroy()
+        self.live_chart(vn.Visualization(params={"add_windows":self.add_winds}))
+        plt.draw()
         self.make_widgets()
 
 
@@ -466,12 +470,12 @@ class GUI():
         if self.trading:
             self.trading=False
             self.strategy.stg.trade_dict={}
-            message = "\n-------------------\n------stop trading-----\n"
+            message = "-------stop trading------"
         else:
             self.trading = True
-            message = "\n-------------------\n-----start trading-----\n"
+            message = "------start trading------"
         now = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.history[time.time()] = {"time": now, "trading": message}
+        self.history[time.time()] = {"time": now, "action": message}
         try:
             if not os.path.exists(self.settings_path.rstrip("settings.json")+self.strategy.name):
                 os.mkdir(self.settings_path.rstrip("settings.json")+self.strategy.name)

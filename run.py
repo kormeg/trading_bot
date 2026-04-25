@@ -6,7 +6,7 @@ from importlib.metadata import version as get_version
 from ctypes import windll
 
 # Список необходимых библиотек
-required_modules = {"pybit" : "5.7.0", 
+required_modules = {"pybit" : "5.16.0", 
                     "pandas" : "2.0.2", 
                     "numpy" : "1.24.3", 
                     "IPython" : "8.8.0", 
