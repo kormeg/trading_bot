@@ -54,7 +54,7 @@ class API():
             max_retries=200,
             retry_delay=3,
             demo=demo,
-            timeout=10,
+            timeout=20,
         )
     
 

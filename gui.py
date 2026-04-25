@@ -99,13 +99,13 @@ class GUI():
         screen_height = self.window.winfo_screenheight()
         self.app_width = int(screen_width*0.75* scaling_factor)
         self.app_height = int(screen_height*0.7* scaling_factor)
-        x = int((screen_width/2) - self.app_width/2)
-        y = int((screen_height/2) - self.app_height/2)
+        x = int((screen_width/2 * scaling_factor) - self.app_width/2)
+        y = int((screen_height/2 * scaling_factor) - self.app_height/2)
         self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
-        self.sf =("TkMenuFont", 8)# int(round(self.app_height/90)))
-        self.mf = ("TkMenuFont", 11)# int(round(self.app_height/70)))
-        self.lf = ("TkMenuFont", 13)# int(round(self.app_height/60)))
+        self.sf =("TkMenuFont", int(round(screen_height/90)))
+        self.mf = ("TkMenuFont", int(round(screen_height/70)))
+        self.lf = ("TkMenuFont", int(round(screen_height/60)))
         print(self.sf, self.mf, self.lf)
         
         
