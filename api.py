@@ -67,7 +67,7 @@ class API():
                     retries=200,
                     restart_on_error=True,
                     ping_interval=30,
-                    ping_timeout=10, 
+                    ping_timeout=15, 
                     private_auth_expire=2
                 )
                 
@@ -97,7 +97,7 @@ class API():
                     retries=200,
                     restart_on_error=True,
                     ping_interval=30,  
-                    ping_timeout=10,
+                    ping_timeout=15,
                     private_auth_expire=2
                 )
             self.private_ws.position_stream(callback=self.private_handle)

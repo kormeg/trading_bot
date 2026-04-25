@@ -447,7 +447,10 @@ class GUI():
         if "5" in self.client.intervals:
             df = []
             for symb in self.client.symbols:
-                natr = GUI.natr(self.client.data[symb]["intervals"]["5"]["data"])
+                try:
+                    natr = GUI.natr(self.client.data[symb]["intervals"]["5"]["data"])
+                except:
+                    natr = 0
                 self.client.data[symb]["natr"] = natr
                 l = [symb, natr]
                 df.append(l)
