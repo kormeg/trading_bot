@@ -84,12 +84,12 @@ class GUI():
         y = int((screen_height/2) - self.app_height/2)
         self.window.geometry(f"{self.app_width}x{self.app_height}+{x}+{y}")
 
-        self.sf =("TkMenuFont", 8)#, int(self.app_height/90))
-        self.mf = ("TkMenuFont", 10)# int(self.app_height/70))
-        self.lf = ("TkMenuFont", 13)# int(self.app_height/55))
+        self.sf =("TkMenuFont", int(self.app_height/90))
+        self.mf = ("TkMenuFont", int(self.app_height/70))
+        self.lf = ("TkMenuFont", int(self.app_height/55))
         print(self.sf, self.mf, self.lf)
         
-
+        
         for i in range(GUI.grid_rows):
             self.window.rowconfigure(i+1, weight=1, minsize=int(self.app_height/GUI.grid_rows))
         for i in range(GUI.grid_cols):
