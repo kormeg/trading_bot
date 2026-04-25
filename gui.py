@@ -95,10 +95,10 @@ class GUI():
 
 
         self.window.title(GUI.app_name)
-        screen_width = self.window.winfo_screenwidth()
-        screen_height = self.window.winfo_screenheight()
-        self.app_width = int(screen_width*0.75/3)
-        self.app_height = int(screen_height*0.7/3)
+        screen_width = int(self.window.winfo_screenwidth()/scaling_factor)
+        screen_height = int(self.window.winfo_screenheight()/scaling_factor)
+        self.app_width = int(screen_width*0.75)
+        self.app_height = int(screen_height*0.7)
         x = int((screen_width/2) - self.app_width/2)
         y = int((screen_height/2) - self.app_height/2)
         self.window.geometry(f"{int(self.app_width * scaling_factor)}x{int(self.app_height * scaling_factor)}+{x}+{y}")
