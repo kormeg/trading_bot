@@ -71,7 +71,8 @@ class Window():
 
         if entry:
             self.entry = tk.Entry(self.window)
-            self.entry.grid(row=3, column=0, columnspan=2)      
+            self.entry.grid(row=3, column=0, columnspan=2)  
+            # entry.focus()    
 
         if drop_down_list:
             self.combo = ttk.Combobox(self.window, values=drop_down_list, state="readonly")
@@ -94,7 +95,7 @@ class Window():
             self.kwargs=kwargs
             self.progress = Progressbar(self.window, orient=tk.HORIZONTAL, length=400, mode='indeterminate')
             
-            threading.Thread(target=self.prog_func).start()
+            threading.Thread(target=self.prog_func, daemon=True).start()
 
         if exit:
             self.button = tk.Button(self.window, text=exit, width=10,height=1, command=lambda:self.get_value("event"))

@@ -6,15 +6,20 @@ from importlib.metadata import version as get_version
 from ctypes import windll
 
 # Список необходимых библиотек
-required_modules = {"pybit" : "5.16.0", 
-                    "pandas" : "2.0.2", 
-                    "numpy" : "1.24.3", 
-                    "IPython" : "8.8.0", 
-                    "matplotlib" : "3.6.3",  
-                    "ta" : "0.10.2"}
+required_modules = {
+    "pybit": {"pypi_name": "pybit", "version": "5.16.0"},
+    "pandas": {"pypi_name": "pandas", "version": "2.3.3"},
+    "numpy": {"pypi_name": "numpy", "version": "2.2.6"},
+    "IPython": {"pypi_name": "ipython", "version": "8.8.0"},
+    "matplotlib": {"pypi_name": "matplotlib", "version": "3.10.9"},
+    "ta": {"pypi_name": "ta", "version": "0.10.2"},
+    "pandas_ta_classic": {"pypi_name": "pandas-ta-classic", "version": "0.6.20"},
+}
 
 # проверка наличия и установка библиотек
-for module, version in required_modules.items():
+for module, info in required_modules.items():
+    name = info["pypi_name"]
+    version = info["version"]
     if importlib.util.find_spec(module) is not None:
         vers = get_version(module)
         if vers != version:
@@ -22,7 +27,7 @@ for module, version in required_modules.items():
             print("Установлена неподходящая версия")
             try:
                 subprocess.check_call([
-                    sys.executable, "-m", "pip", "install", "--upgrade", f"{module}=={version}"
+                    sys.executable, "-m", "pip", "install", "--upgrade", f"{name}=={version}"
                 ])
                 print(f"Необходимая версия {module} успешно установлена")
             except subprocess.CalledProcessError as e:
@@ -34,7 +39,7 @@ for module, version in required_modules.items():
         try:
             print(f"Модуль {module} не найден, устанавливается...")
             subprocess.check_call([
-                sys.executable, "-m", "pip", "install", "--upgrade", f"{module}=={version}"
+                sys.executable, "-m", "pip", "install", "--upgrade", f"{name}=={version}"
             ])
             print(f"Необходимая версия {module} успешно установлена")
         except subprocess.CalledProcessError as e:
@@ -43,32 +48,34 @@ for module, version in required_modules.items():
             sys.exit(1)
 print("Все пакеты готовы к использованию!")
 
-# # запрещаем винде менять dpi
-# try:
-#     # Метод 1: Windows 10 1607+
-#     windll.user32.SetProcessDpiAwarenessContext(0)  
-#     print("SetProcessDpiAwarenessContext(0) succeeded")
-# except AttributeError:
-#     print("SetProcessDpiAwarenessContext not available")
+# запрещаем винде менять dpi
+try:
+    # Метод 1: Windows 10 1607+
+    windll.user32.SetProcessDpiAwarenessContext(0)  
+    print("SetProcessDpiAwarenessContext(0) succeeded")
+except AttributeError:
+    print("SetProcessDpiAwarenessContext not available")
 
-# try:
-#     # Метод 2: Windows 8.1+
-#     windll.shcore.SetProcessDpiAwareness(0)  
-#     print("SetProcessDpiAwareness(0) succeeded")
-# except AttributeError:
-#     print("SetProcessDpiAwareness not available")
+try:
+    # Метод 2: Windows 8.1+
+    windll.shcore.SetProcessDpiAwareness(0)  
+    print("SetProcessDpiAwareness(0) succeeded")
+except AttributeError:
+    print("SetProcessDpiAwareness not available")
 
-# try:
-#     # Метод 3: Windows Vista+
-#     windll.user32.SetProcessDPIAware()
-#     print("SetProcessDPIAware succeeded")
-# except AttributeError:
-#     print("SetProcessDPIAware not available")
+try:
+    # Метод 3: Windows Vista+
+    windll.user32.SetProcessDPIAware()
+    print("SetProcessDPIAware succeeded")
+except AttributeError:
+    print("SetProcessDPIAware not available")
+
+    
 
 import bot
 
-# # синхронизация времени
-os.system('w32tm /resync')
+# # # синхронизация времени
+# os.system('w32tm /resync')
 
 if __name__ == "__main__":
     new_bot = bot.Bot()

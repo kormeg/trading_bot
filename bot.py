@@ -64,16 +64,32 @@ class Bot():
         try:
             self.bb_client.check_balance()
         except:
-            w = wn("", main_label="API не работает, а значит вы не сможете торговать как реальными, так и демо средствами, " + 
-                   "но прочие функции должны работать. Можете с ними ознакомиться", exit="ok", interrupt=True)
+            w = wn("", main_label="API-ключи недействительны, а значит вы не сможете торговать как реальными, так и демо средствами, " + 
+                   "но прочие функции должны работать. Можете с ними ознакомиться.\nХотите заменить ключи для этого бота?", yes_no_buttons=["Заменить", "Продолжить"], interrupt=True)
+            if w.yes_no:
+                w = wn("changing the keys", main_label="type new api-key", entry=True, exit="ok")
+                self.settings["api_key"] = w.entered_value
+                w = wn("changing the keys", main_label="type new secret-key", entry=True, exit="ok")
+                self.settings["secret_key"] = w.entered_value
+                with open(self.settings_path, "w", encoding="utf-8") as f:
+                    json.dump(self.settings, f, indent=4, ensure_ascii=False)
+                self.api_key = self.settings["api_key"]
+                self.secret_key = self.settings["secret_key"]
+                self.bb_client = api.API(self.api_key, self.secret_key, websocket=True)
+                try:
+                    self.bb_client.check_balance()
+                    print("Рабочие ключи")
+                except:
+                    print("Эти ключи тоже не подходят")
 
-        symbols = self.bb_client.get_symbol_list()[100:110]
-        intervals = api.API.intervals[:3]
+        symbols = self.bb_client.get_symbol_list()[:]
+        # intervals = api.API.intervals[:2]
+        intervals = ["1","5"]
         print(dt.datetime.now())
         w = wn(main_label="loading....", interrupt=True, progress_bar=True, func=self.bb_client.a_get_data, symbols=symbols, intervals=intervals, open_interest=True)
         print(dt.datetime.now())
 
-        self.gui = gui.GUI(self.bb_client, self.settings_path)
+        self.gui = gui.GUI(self.bb_client, self.settings_path, self.name)
         self.gui.window.protocol("WM_DELETE_WINDOW",lambda:self.on_closing())
         self.gui.window.mainloop()
 

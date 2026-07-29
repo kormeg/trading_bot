@@ -224,3 +224,51 @@ def get_overall_table(df, dfs=(list, pd.DataFrame), direction="decrease", time_t
 
 
 
+def frame_print(message, sep=None, ignore_unfit=False, print_error=False):
+
+    if type(message) == dict:
+        if not sep:
+            sep = " : "
+        mess = [str(k) + sep + str(v) for k, v in message.items() if type(v) in [str, int, float, bool, type(None)]]
+        if not ignore_unfit:
+            if len(mess) < len(message):
+                e = "Error: Не все значения словаря соответствуют нужным типам данных"
+                if print_error:
+                    frame_print(e)
+                return e
+        mess = "\n".join(mess)
+    elif type(message) in [list, tuple]:
+        mess = ""
+        if not sep:
+            sep = ", "
+        for x in message:
+            if type(x) in [str, int, float, bool, type(None)]:
+                if not mess:
+                    mess += str(x)
+                else:
+                    mess += sep + str(x)
+            else:
+                if not ignore_unfit:
+                    e = "Error: Не все элементы соответствуют нужным типам данных"
+                    if print_error:
+                        frame_print(e)
+                    return e
+
+    elif type(message) in [str, int, float, bool, type(None)]:
+        mess = str(message)
+    else:
+        try:
+            mess = message
+        except:
+            e = "Error: Неподходящий тип данных"
+            if print_error:
+                frame_print(e)
+            return e
+    
+    print("\n------------------------------------------------")
+    print(mess)
+    print("------------------------------------------------")
+    return mess
+
+
+

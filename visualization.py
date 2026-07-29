@@ -269,7 +269,7 @@ class Visualization:
                 if not marks:
                     marks = ["o"]
                 if not mark_size:
-                    mark_size =  5
+                    mark_size = 5
                 if not transparency:
                     transparency = .5
                 self.add_dots(data=data, chart=chart, colors=colors, marks=marks, mark_size=mark_size, transparency=transparency)
@@ -326,8 +326,11 @@ class Visualization:
         self.main_ax.set_title(label="#" + self.symbol + "#" + str(self.timeframe) + "#")
         for ax in self.axis_list:
             ax.grid(linewidth=0.5, color="gray", alpha=.5)
-            inter = int(float(self.timeframe)/5)
-            ax.xaxis.set_major_locator(mdates.HourLocator(interval=inter))
+            if self.timeframe == "1":
+                ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=15))
+            else:
+                inter = int(float(self.timeframe)/5)
+                ax.xaxis.set_major_locator(mdates.HourLocator(interval=inter))
             ax.xaxis.set_major_formatter(mdates.DateFormatter("%d.%m %H:%M"))
 
         self.candle_width = dt.timedelta(minutes=int(self.timeframe)*.85)
@@ -341,9 +344,9 @@ class Visualization:
         self.main_ax.bar(self.dn.index, self.dn["high"]-self.dn["open"], self.shadow_width, bottom=self.dn["open"], color=params["colors"][2], alpha=.6) 
         self.main_ax.bar(self.dn.index, self.dn["low"]-self.dn["close"], self.shadow_width, bottom=self.dn["close"], color=params["colors"][2], alpha=.6)
 
-        line_color = "red" if self.df["close"][0] < self.df["close"][1] else "green"
-        self.main_ax.axhline(y=self.df["close"][0], color=line_color, linestyle='--', linewidth=0.2) #текущая цена
-        self.main_ax.text(x=self.df.index[0]+ dt.timedelta(minutes=int(self.timeframe)*1), y=self.df["close"][0], s=str(self.df["close"][0]), ha='left', color=line_color, fontsize=6)
+        line_color = "red" if self.df["close"].iloc[0] < self.df["close"].iloc[1] else "green"
+        self.main_ax.axhline(y=self.df["close"].iloc[0], color=line_color, linestyle='--', linewidth=0.2) #текущая цена
+        self.main_ax.text(x=self.df.index[0]+ dt.timedelta(minutes=int(self.timeframe)*1), y=self.df["close"].iloc[0], s=str(self.df["close"].iloc[0]), ha='left', color=line_color, fontsize=6)
         self.cursor = Cursor(self.main_ax, useblit=True, color='black', linewidth=.5,  linestyle='--')
         
 

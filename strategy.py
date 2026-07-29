@@ -1,10 +1,12 @@
 import sys
-sys.path.append("../config/strategies")
+# sys.path.append("../config/strategies")
 
 from func import indicators as indi
 import pandas as pd
 import os.path
 from window import Window as wn
+import importlib.util
+import shutil
 
              
 
@@ -34,13 +36,23 @@ class Strategy:
         if not os.path.exists("../config/strategies"):
             os.mkdir("../config/strategies")
         self.name = name
-        if os.path.exists(f"../config/strategies/{self.name}.py"):
-            self.stg = __import__(self.name)
+        self.strat_dir = f"../config/strategies/{self.name}"
+        strat_path = f"{self.strat_dir}/{self.name}.py"
+        if os.path.exists(strat_path):
+            abs_path = os.path.abspath(strat_path)
+            spec = importlib.util.spec_from_file_location(self.name, abs_path)
+            self.stg = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(self.stg)
             self.strategy_dict = self.stg.strat_dict
+
+            # self.stg = __import__(self.name)
+            # print(self.stg.__dict__)
+            # self.strategy_dict = self.stg.strat_dict
             self.old_data = self.stg.strat_dict.copy()
             self.status = "existing"
         else:
             self.strategy_dict = {
+                "name" : self.name,
                 "symbols" : [],
                 "timeframes" : ["5", "15"],
                 "order_type" : "limit",
@@ -58,51 +70,59 @@ class Strategy:
                         max_risk = False,
                         min_profit = False
                         ):
+        
         new_dict = {k:v for k, v in locals().items() if type(v) != bool and k != "self"}  
         self.strategy_dict = self.strategy_dict | new_dict
+        # self.save_strategy()
         self.stg.strat_dict.update(self.strategy_dict)
         
     
     def save_strategy(self, name=None):
-        if name:
-            to_remove = False
-            if os.path.exists(f"../config/strategies/{name}.py"):
-                w = wn(label="Стратегия с таким именем уже существует. удалить её?", yes_no_buttons=["Да", "Нет"])
+        to_remove = False
+        if not name:
+            name = self.name
+        else:          
+            if os.path.exists(f"../config/strategies/{name}/{name}.py"):
+                w = wn(main_label="Стратегия с таким именем уже существует. удалить её?", yes_no_buttons=["Да", "Нет"])
                 if w.yes_no:
                     to_remove=True
 
-            if os.path.exists(f"../config/strategies/{self.name}.py"):
-                w = wn(label="Внести изменения в стратегию?", yes_no_buttons=["Да", "Нет"])
-                if w.yes_no:
-                    if to_remove:
-                        os.remove(f"../config/strategies/{name}.py")
-                    os.rename(f"../config/strategies/{self.name}.py", f"../config/strategies/{name}.py")
-                    with open(f"../config/strategies/{name}.py","r+") as f:
-                        old = f.read()
-                        f.truncate(0)
-                        f.seek(0)
-                        new = old.replace(str(self.old_data), str(self.strategy_dict))
-                        f.write(new)   
-
-            else:
+        if os.path.exists(f"../config/strategies/{self.name}/{self.name}.py"):
+            w = wn(main_label="Внести изменения в стратегию?", yes_no_buttons=["Да", "Нет"])
+            if w.yes_no:
                 if to_remove:
-                    os.remove(f"../config/strategies/{name}.py")
-                with open(f"../config/strategies/{name}.py","w+") as f:
-                    f.write(str(f"strat_dict = {self.strategy_dict}"))
-                
+                    shutil.rmtree(f"../config/strategies/{name}")
+                if name != self.name:
+                    os.rename(f"../config/strategies/{self.name}", f"../config/strategies/{name}")
+                    os.rename(f"../config/strategies/{name}/{self.name}.py", f"../config/strategies/{name}/{name}.py")
+                self.name = name
+                self.strategy_dict["name"] = self.name
+                with open(f"../config/strategies/{self.name}/{self.name}.py","r+") as f:
+                    old = f.read()
+                    f.truncate(0)
+                    f.seek(0)
+                    new = old.replace(str(self.old_data), str(self.strategy_dict))
+                    f.write(new)   
+
         else:
-            if os.path.exists(f"../config/strategies/{self.name}.py"):
-                w = wn(label="Внести изменения в стратегию?", yes_no_buttons=["Да", "Нет"])
-                if w.yes_no:
-                    with open(f"../config/strategies/{self.name}.py","r+") as f:
-                        old = f.read()
-                        f.truncate(0)
-                        f.seek(0)
-                        new = old.replace(str(self.old_data), str(self.strategy_dict))
-                        f.write(new)
-            else:
-                with open(f"../config/strategies/{self.name}.py","w+") as f:
-                    f.write(str(f"strat_dict = {self.strategy_dict}")) 
+            if to_remove:
+                os.remove(f"../config/strategies/{name}/{name}.py")
+            self.name = name
+            self.strategy_dict["name"] = self.name
+            os.makedirs(f"../config/strategies/{self.name}", exist_ok=True)
+            with open(f"../config/strategies/{self.name}/{self.name}.py","w+") as f:
+                f.write(str(f"strat_dict = {self.strategy_dict}" +
+                            "\ntrade_dict = {}\n\n\n" +
+                            "\nimport datetime as dt\nimport sys\nimport os\nimport json\n\n" + 
+                            "strategy_dir = os.path.dirname(os.path.abspath(__file__))\n" + 
+                            "parent_dir = os.path.dirname(strategy_dir)\n" + 
+                            "gparent_dir = os.path.dirname(parent_dir)\n" + 
+                            "ggparent_dir = os.path.dirname(gparent_dir)\n" + 
+                            "project_path = os.path.join(ggparent_dir, \"trading_bot\")\n\n"+ 
+                            "if project_path not in sys.path:\n\tsys.path.insert(0, project_path)\n"
+                            "from func.indicators import natr"))
+
+                    
 
 
 
@@ -110,36 +130,47 @@ class Strategy:
         strat_list = []
         try:
             for filename in os.listdir("../config/strategies"):
-                if ".py" in filename:
-                    strat_list.append(filename.rstrip(".py"))
+                if filename != "__pycache__":
+                    strat_list.append(filename)#.rstrip(".py"))
+                    # print(strat_list)
         except:
             pass
         return strat_list
     
 
 
-    def calculate_strategy(self, data, add_symbol, fs=4, stl=14 ):
-        if "key_fractals" in list(self.strategy_dict["indicators"]) and not "fractals" in list(self.strategy_dict["indicators"]):
+    def calculate_strategy(self, client, add_symbol, fs=4, stl=14 ):
+        if "key_fractals" in self.strategy_dict["indicators"] and not "fractals" in self.strategy_dict["indicators"]:
             self.strategy_dict["indicators"]["fractals"] = {}
 
-        sl = self.strategy_dict["symbols"].copy()
-        if add_symbol not in sl:
-            sl.append(add_symbol)
-        self.indi_dict = {k:v |{"data":{k:{"intervals":{ k:{"data":""} for k in self.strategy_dict["timeframes"]}} for k in sl}} for k, v in self.strategy_dict["indicators"].items()}
+        sl = set(self.strategy_dict["symbols"].copy() + list(client.deals) + [add_symbol])
+        # if add_symbol not in sl:
+        #     sl.append(add_symbol)
+        indi_dict = {k:v |{"data":{k:{"intervals":{ k:{"data":""} for k in self.strategy_dict["timeframes"]}} for k in sl}} for k, v in self.strategy_dict["indicators"].items()}
         for symb in sl:
             for i in self.strategy_dict["timeframes"]:
-                if "fractals" in list(self.strategy_dict["indicators"]) or "key_fractals" in list(self.strategy_dict["indicators"]):
-                    self.indi_dict["fractals"]["data"][symb]["intervals"][i]["data"] = indi.fractals(data[symb]["intervals"][i]["data"], size=fs)
-                if "key_fractals" in list(self.strategy_dict["indicators"]):
-                    self.indi_dict["key_fractals"]["data"][symb]["intervals"][i]["data"] = indi.key_fractals(self.indi_dict["fractals"]["data"][symb]["intervals"][i]["data"])
-                if "imbalance" in list(self.strategy_dict["indicators"]):
-                    self.indi_dict["imbalance"]["data"][symb]["intervals"][i]["data"] = indi.imbalance(data[symb]["intervals"][i]["data"])
-                if "stoch" in list(self.strategy_dict["indicators"]):
-                    self.indi_dict["stoch"]["data"][symb]["intervals"][i]["data"] = indi.stoch(data[symb]["intervals"][i]["data"].iloc[::-1], stl)
-                if "volume" in list(self.strategy_dict["indicators"]):
-                    self.indi_dict["volume"]["data"][symb]["intervals"][i]["data"] = pd.DataFrame(data[symb]["intervals"][i]["data"]["volume"])
-                if "open_interest" in list(self.strategy_dict["indicators"]):
-                    self.indi_dict["open_interest"]["data"][symb]["intervals"][i]["data"] = pd.DataFrame(data[symb]["intervals"][i]["data"]["open_interest"])
+                if "fractals" in self.strategy_dict["indicators"] or "key_fractals" in self.strategy_dict["indicators"]:
+                    indi_dict["fractals"]["data"][symb]["intervals"][i]["data"] = indi.fractals(client.data_to_read(symb, i), size=fs)
+                if "key_fractals" in self.strategy_dict["indicators"]:
+                    indi_dict["key_fractals"]["data"][symb]["intervals"][i]["data"] = indi.key_fractals(self.indi_dict["fractals"]["data"][symb]["intervals"][i]["data"])
+                if "imbalance" in self.strategy_dict["indicators"]:
+                    indi_dict["imbalance"]["data"][symb]["intervals"][i]["data"] = indi.imbalance(client.data_to_read(symb, i))
+                if "stoch" in self.strategy_dict["indicators"]:
+                    indi_dict["stoch"]["data"][symb]["intervals"][i]["data"] = indi.stoch(client.data_to_read(symb, i), stl)
+                if "volume" in self.strategy_dict["indicators"]:
+                    indi_dict["volume"]["data"][symb]["intervals"][i]["data"] = pd.DataFrame(client.data_to_read(symb, i)["volume"])
+                if "open_interest" in self.strategy_dict["indicators"]:
+                    indi_dict["open_interest"]["data"][symb]["intervals"][i]["data"] = pd.DataFrame(client.data_to_read(symb, i)["open_interest"])
+        self.stg.indi_dict = indi_dict
+    
 
+    def indi_dict_to_read(self, indicator, symbol, interval):
+        return self.stg.indi_dict[indicator]["data"][symbol]["intervals"][interval]["data"].copy()
+    
+    def indicator_to_plot(self, indicator, symbol, interval):
+        print(self.indicators[indicator] | self.indi_dict_to_read(indicator, symbol, interval))
+        return self.indicators[indicator] | self.indi_dict_to_read(indicator, symbol, interval)
+        
 
-
+# st = Strategy("super_TPSL")
+# st.save_strategy()
