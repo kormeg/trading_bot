@@ -569,7 +569,8 @@ class API():
             frame_print("Не удалось открыть позицию. Подключение отсутствует.")   
             return False
         try:
-            timestamp = self.get_bybit_time()
+            # timestamp = self.get_bybit_time()
+            self.sync_system_time()
             result = self.session.place_order( 
                 category="linear", 
                 symbol=symbol,
@@ -579,7 +580,7 @@ class API():
                 price=price, 
                 stopLoss=stop_loss,
                 takeProfit=take_profit,
-                timestamp = timestamp
+                # timestamp = timestamp
             )
             if result.get("retCode") == 0:
                 # time.sleep(1) # чтобы не пришел ответ с нулевой позицией. можно обработать это в get_position, с количеством попыток и паузой, чтобы не застрять там навечно
@@ -624,7 +625,8 @@ class API():
             return False
             
         try:
-            timestamp = self.get_bybit_time()
+            self.sync_system_time()
+            # timestamp = self.get_bybit_time()
             result = self.session.place_order(
                     category="linear", 
                     symbol=symbol,
@@ -632,7 +634,7 @@ class API():
                     qty=qty,
                     orderType="market",
                     reduce_only=True,
-                    timestamp=timestamp
+                    # timestamp=timestamp
                 )
             if result.get("retCode") == 0:
                 frame_print("Позиция закрыта")
@@ -729,7 +731,11 @@ class API():
         try:
             self.api_connection()
             timestamp = self.get_bybit_time()
-            res = self.session.get_positions(category="linear", symbol=symbol, timestamp=timestamp)
+            res = self.session.get_positions(
+                category="linear", 
+                symbol=symbol, 
+                timestamp=timestamp
+                )
             position = res["result"]["list"][0]
             if not position["size"]:
                 return {}
@@ -760,8 +766,12 @@ class API():
 
     def get_closed_deals(self, qty=5):
         self.api_connection()
-        timestamp = self.get_bybit_time()
-        res = self.session.get_closed_pnl(category="linear", limit=qty, timestamp=timestamp)
+        # timestamp = self.get_bybit_time()
+        res = self.session.get_closed_pnl(
+            category="linear", 
+            limit=qty, 
+            # timestamp=timestamp
+            )
         positions = {}
         for i in res["result"]["list"]:
             i["closeTime"] = i.pop("updatedTime")
@@ -774,6 +784,7 @@ class API():
     
     def handle_just_closed(self, symbol, retries=5):
 
+        self.sync_system_time()
         for j in range(retries):
             closed = self.get_closed_deals(5)
             for i in closed:
