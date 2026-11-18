@@ -122,7 +122,11 @@ class API():
 
     def public_ws_connection(self):
         if self.public_ws:
-            self.public_ws.exit()
+            try:
+                self.public_ws.exit()
+            except Exception: 
+                pass
+            self.public_ws = None
         try:
             self.public_ws = WebSocket(
                     testnet=False,
@@ -146,7 +150,11 @@ class API():
 
     def private_ws_connection(self):
         if self.private_ws:
-            self.private_ws.exit()
+            try:
+                self.private_ws.exit()
+            except Exception:
+                pass
+            self.private_ws = None
         try:
             self.private_ws = WebSocket(
                     testnet=False,
@@ -170,9 +178,14 @@ class API():
 
     def is_ws_connect(self, ws):
         try:
-            return ws.ws.sock.connected
-        except (AttributeError, TypeError):
+            sock = getattr(getattr(ws, "ws", None), "sock", None)
+            return bool(sock and sock.connected)
+        except Exception:
             return False
+        # try:
+        #     return ws.ws.sock.connected
+        # except (AttributeError, TypeError):
+        #     return False
         
 
     def public_ws_reconnect(self):
